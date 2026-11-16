@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import client, { errorMessage, fieldErrors } from '../api/client';
 import { initials } from '../components/Layout';
 import { Progress, PromoBanner, Toast } from '../components/ui';
+import { AreaSelect } from '../components/AreaSelect';
+import { joinArea, splitAddress } from '../utils/areas';
 
 const BANNERS = [
   { tag: 'Mẹo tuyển dụng', title: 'Tin ghi rõ ca làm và mức lương nhận nhiều đơn hơn', text: 'Sinh viên lọc theo ca và lương, tin thiếu thông tin sẽ khó được tìm thấy.', big: '3x', bigNote: 'lượt ứng tuyển', cta: 'Xem tin của tôi', to: '/employer/jobs', theme: 'yellow' },
@@ -16,8 +18,10 @@ const FIELDS = [
   ['companyName', 'Tên đơn vị / cá nhân *', 'vd: The Coffee Corner'],
   ['contactEmail', 'Email liên hệ', 'vd: tuyendung@congty.vn'],
   ['contactPhone', 'Số điện thoại liên hệ', 'vd: 0281234567'],
-  ['address', 'Địa chỉ', 'vd: Bình Thạnh, TP.HCM'],
 ];
+
+// Ghép địa chỉ: số nhà, đường (gõ thêm nếu cần) + khu vực, tỉnh/thành (chọn từ danh sách)
+const fullAddress = (street, area) => [street.trim(), area].filter(Boolean).join(', ');
 
 // MH-06 – Hồ sơ nhà tuyển dụng (B6-09)
 export default function EmployerProfilePage() {
@@ -38,6 +42,10 @@ export default function EmployerProfilePage() {
   }, []);
 
   const onChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  const addr = splitAddress(form.address);
+  const area = joinArea(addr.province, addr.area);
+  const setArea = (v) => setForm({ ...form, address: fullAddress(addr.street, v) });
+  const setStreet = (e) => setForm({ ...form, address: fullAddress(e.target.value, area) });
 
   const onSave = async (e) => {
     e.preventDefault();
@@ -89,6 +97,15 @@ export default function EmployerProfilePage() {
                 {errors[key] && <span className="error">{errors[key]}</span>}
               </label>
             ))}
+            <label className="wide">Khu vực (tỉnh/thành, quận)
+              <AreaSelect value={area} onChange={setArea} remote={false} wholeLabel="Chọn khu vực" />
+              {form.address && !area && <span className="hint">Địa chỉ cũ "{form.address}" chưa theo danh sách, vui lòng chọn lại.</span>}
+            </label>
+            <label className="wide">Số nhà, tên đường (không bắt buộc)
+              <input value={addr.street} onChange={setStreet} disabled={!area}
+                placeholder={area ? 'vd: 12 Nguyễn Gia Trí' : 'Chọn khu vực trước'} />
+              {errors.address && <span className="error">{errors.address}</span>}
+            </label>
             <label className="wide">Mô tả
               <textarea name="description" rows="5" value={form.description} onChange={onChange}
                 placeholder="Lĩnh vực hoạt động, môi trường làm việc, quyền lợi cho sinh viên..." />

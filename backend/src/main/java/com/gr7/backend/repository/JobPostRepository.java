@@ -13,6 +13,9 @@ import java.util.List;
 public interface JobPostRepository extends JpaRepository<JobPost, Long>, JpaSpecificationExecutor<JobPost> {
     Page<JobPost> findByEmployerId(Long employerId, Pageable pageable);
 
+    /** Tin chưa có ca làm (thêm cột shift_slots sau, hoặc nạp bằng SQL) – để quy đổi lúc khởi động. */
+    List<JobPost> findByShiftSlots(int shiftSlots);
+
     /** Trang "Tin của tôi": tin mới nhất lên đầu. */
     List<JobPost> findByEmployerIdOrderByCreatedAtDesc(Long employerId);
 

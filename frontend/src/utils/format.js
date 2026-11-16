@@ -2,7 +2,6 @@
 
 // Ngành nghề khớp với dữ liệu mẫu ở backend (DataSeeder)
 export const CATEGORIES = ['F&B', 'Bán hàng', 'Gia sư', 'Nhập liệu', 'Sự kiện – PG', 'Giao hàng', 'Khác'];
-export const LOCATIONS = ['Bình Thạnh', 'Gò Vấp', 'Quận 1', 'Quận 3', 'Quận 7', 'Phú Nhuận', 'Thủ Đức', 'Làm từ xa'];
 export const UNIT = { HOUR: 'giờ', DAY: 'ngày', MONTH: 'tháng', PROJECT: 'dự án' };
 
 export const JOB_STATUS = {
