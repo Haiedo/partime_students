@@ -566,3 +566,35 @@ img { max-width: 100%; }
   .time-pick { width: 100%; }
   .hero-count { display: none; }
 }
+
+/* ===== Thanh tìm kiếm 2 hàng: từ khóa + nút; hàng bộ lọc (ngành, địa điểm, lương, ngày rảnh, buổi rảnh) ===== */
+.search-band { display: flex; flex-direction: column; gap: 10px; }
+.search-band .sb-main { display: grid; grid-template-columns: minmax(0, 1fr) 150px; gap: 10px; }
+.search-band .sb-filters { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+.search-band input, .search-band select { grid-column: auto; width: 100%; }
+
+/* Chọn địa chỉ bằng 2 danh sách */
+.area-select { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; margin-top: 6px; }
+.area-select select { width: 100%; min-width: 0; }
+.area-select select:disabled { background: #F3F4F6; color: #9CA3AF; }
+.area-select .hint { grid-column: 1 / -1; margin: 0; font-size: 13px; color: #B45309; }
+
+/* Form đăng tin: thời gian làm chọn bằng danh sách */
+.wt-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 16px; margin-bottom: 12px; }
+.wt-grid label { display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 600; color: #374151; }
+.day-pick { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.day-check { display: inline-flex; flex-direction: row; align-items: center; gap: 6px; padding: 7px 12px; border: 1.5px solid #D1D5DB; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; background: #fff; }
+.day-check input { width: 16px; height: 16px; margin: 0; accent-color: #5B2BB0; }
+.day-check.on { border-color: #5B2BB0; background: #F3EEFF; color: #3B1E6E; }
+.form-sec.has-error .wt-grid select { border-color: #DC2626; }
+
+@media (max-width: 1100px) {
+  .search-band .sb-filters { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 900px) {
+  .search-band .sb-filters { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 560px) {
+  .search-band .sb-main, .search-band .sb-filters { grid-template-columns: 1fr; }
+  .area-select, .wt-grid { grid-template-columns: 1fr; }
+}

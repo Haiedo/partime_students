@@ -14,7 +14,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 /**
- * GET /api/jobs?keyword=&category=&location=&minSalary=&maxSalary=&salaryUnit=&sort=newest|salary&page=0&size=10
+ * GET /api/jobs?keyword=&category=&location=&minSalary=&maxSalary=&salaryUnit=&days=T7,CN&shifts=TOI&sort=newest|salary&page=0&size=10
  * GET /api/jobs/{id}, GET /api/jobs/categories – công khai, không cần token.
  * Chi tiết tin: khách chưa đăng nhập không thấy email, số điện thoại của nhà tuyển dụng.
  */
@@ -35,10 +35,12 @@ public class JobSearchController {
                                            @RequestParam(required = false) BigDecimal minSalary,
                                            @RequestParam(required = false) BigDecimal maxSalary,
                                            @RequestParam(required = false) SalaryUnit salaryUnit,
+                                           @RequestParam(required = false) String days,
+                                           @RequestParam(required = false) String shifts,
                                            @RequestParam(defaultValue = "newest") String sort,
                                            @RequestParam(defaultValue = "0") int page,
                                            @RequestParam(defaultValue = "10") int size) {
-        return service.search(keyword, category, location, minSalary, maxSalary, salaryUnit, sort, page, size);
+        return service.search(keyword, category, location, minSalary, maxSalary, salaryUnit, days, shifts, sort, page, size);
     }
 
     @GetMapping("/categories")

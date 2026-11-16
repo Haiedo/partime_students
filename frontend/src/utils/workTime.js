@@ -2,11 +2,38 @@
 // Vẫn lưu xuống backend dưới dạng chuỗi workTime, ví dụ "18:00–22:00, T2–T6" hoặc "08:00–12:00, T7, CN; ca xoay".
 
 export const DAYS = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
-export const QUICK = [
-  ['T2–T6', ['T2', 'T3', 'T4', 'T5', 'T6']],
-  ['Cuối tuần', ['T7', 'CN']],
-  ['Cả tuần', DAYS],
+export const DAY_NAMES = { T2: 'Thứ 2', T3: 'Thứ 3', T4: 'Thứ 4', T5: 'Thứ 5', T6: 'Thứ 6', T7: 'Thứ 7', CN: 'Chủ nhật' };
+
+// Các lựa chọn nhanh trong danh sách "Ngày làm"; "custom" = tự chọn từng ngày
+export const DAY_PRESETS = [
+  ['t2t6', 'Thứ 2 – Thứ 6', ['T2', 'T3', 'T4', 'T5', 'T6']],
+  ['t2t7', 'Thứ 2 – Thứ 7', ['T2', 'T3', 'T4', 'T5', 'T6', 'T7']],
+  ['weekend', 'Cuối tuần (Thứ 7, Chủ nhật)', ['T7', 'CN']],
+  ['all', 'Cả tuần', DAYS],
+  ['t246', 'Thứ 2, 4, 6', ['T2', 'T4', 'T6']],
+  ['t357', 'Thứ 3, 5, 7', ['T3', 'T5', 'T7']],
 ];
+
+// Ca mẫu để chọn nhanh khung giờ
+export const SHIFT_PRESETS = [
+  ['Ca sáng (07:00 – 11:00)', '07:00', '11:00'],
+  ['Ca trưa (11:00 – 14:00)', '11:00', '14:00'],
+  ['Ca chiều (13:00 – 17:00)', '13:00', '17:00'],
+  ['Ca tối (18:00 – 22:00)', '18:00', '22:00'],
+  ['Hành chính (08:00 – 17:00)', '08:00', '17:00'],
+];
+
+// Mốc giờ 30 phút một lần, từ 05:00 đến 24:00
+export const TIMES = Array.from({ length: 39 }, (_, i) => {
+  const m = 5 * 60 + i * 30;
+  return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+});
+
+const same = (a, b) => a.length === b.length && a.every((x) => b.includes(x));
+export function presetOf(days) {
+  if (!days.length) return '';
+  return DAY_PRESETS.find(([, , d]) => same(d, days))?.[0] || 'custom';
+}
 
 // Ghép danh sách ngày: các ngày liền nhau từ 3 ngày trở lên viết gọn "T2–T6"
 function daysText(days) {

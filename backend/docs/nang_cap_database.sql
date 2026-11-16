@@ -1,4 +1,4 @@
--- GR7 – Nâng cấp database đang có lên ERD CR-01, GIỮ NGUYÊN dữ liệu cũ
+-- GR7 – Nâng cấp database đang có lên ERD mới (11 bảng), GIỮ NGUYÊN dữ liệu cũ
 -- Chỉ chạy 1 lần. Dùng khi không muốn chạy lại parttime_db_schema.sql (script đó xóa hết dữ liệu).
 USE parttime_db;
 

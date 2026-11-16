@@ -3,7 +3,8 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import client, { errorMessage, fieldErrors } from '../api/client';
 import { Toast } from '../components/ui';
 import { CATEGORIES, UNIT, salaryText } from '../utils/format';
-import { DAYS, QUICK, checkWorkTime, composeWorkTime, parseWorkTime } from '../utils/workTime';
+import { DAYS, DAY_NAMES, DAY_PRESETS, SHIFT_PRESETS, TIMES, checkWorkTime, composeWorkTime, parseWorkTime, presetOf } from '../utils/workTime';
+import { AreaSelect } from '../components/AreaSelect';
 
 const EMPTY = {
   title: '', category: '', location: '', salaryMin: '', salaryMax: '', salaryUnit: 'HOUR',
@@ -47,14 +48,31 @@ export default function JobFormPage() {
     if (errors.workTime) setErrors({ ...errors, workTime: undefined });
   };
   const toggleDay = (d) => changeWt({ ...wt, days: wt.days.includes(d) ? wt.days.filter((x) => x !== d) : [...wt.days, d] });
+  // "Tự chọn từng ngày" giữ trạng thái riêng để hiện các ô chọn ngày kể cả khi chưa chọn ngày nào
+  const [customDays, setCustomDays] = useState(false);
+  const dayPreset = customDays ? 'custom' : presetOf(wt.days);
+  const pickDays = (v) => {
+    if (v === 'custom') { setCustomDays(true); return; }
+    setCustomDays(false);
+    changeWt({ ...wt, days: DAY_PRESETS.find(([k]) => k === v)?.[2] || [] });
+  };
+  const pickShift = (i) => {
+    if (i === '') return;
+    const [, start, end] = SHIFT_PRESETS[Number(i)];
+    changeWt({ ...wt, start, end });
+  };
+  const timeOpts = (extra) => (extra && !TIMES.includes(extra) ? [extra, ...TIMES] : TIMES);
   const workTime = composeWorkTime(wt);
 
   const submit = async (e) => {
     e.preventDefault();
     const wtError = checkWorkTime(wt);
-    if (wtError) {
-      setErrors({ workTime: wtError });
-      setToast({ text: wtError, type: 'error' });
+    const pre = {};
+    if (!form.location) pre.location = 'Vui lòng chọn địa điểm làm việc';
+    if (wtError) pre.workTime = wtError;
+    if (Object.keys(pre).length) {
+      setErrors(pre);
+      setToast({ text: pre.location || pre.workTime, type: 'error' });
       return;
     }
     setErrors({});
@@ -98,42 +116,61 @@ export default function JobFormPage() {
             <legend>Thông tin chung</legend>
             <div className="grid">
               {field('title', 'Tiêu đề tin *', { wide: true, placeholder: 'vd: Phục vụ quán cà phê ca tối', maxLength: 200 })}
-              <label>Ngành nghề *
+              <label className="wide">Ngành nghề *
                 <select name="category" value={form.category} onChange={set} className={errors.category ? 'invalid' : ''}>
                   <option value="">Chọn ngành nghề</option>
                   {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
                 </select>
                 {errors.category && <span className="error">{errors.category}</span>}
               </label>
-              {field('location', 'Địa điểm *', { placeholder: 'vd: Bình Thạnh, TP.HCM' })}
+              <label className="wide">Địa điểm làm việc *
+                <AreaSelect value={form.location} invalid={!!errors.location} wholeLabel="Nhiều khu vực trong tỉnh/thành"
+                  onChange={(v) => { setForm({ ...form, location: v }); if (errors.location) setErrors({ ...errors, location: undefined }); }} />
+                {errors.location && <span className="error">{errors.location}</span>}
+              </label>
             </div>
           </fieldset>
 
           {/* 2. Thời gian làm việc: chọn ngày và khung giờ thay cho ô nhập tay */}
           <fieldset className={`form-sec ${errors.workTime ? 'has-error' : ''}`}>
             <legend>Thời gian làm việc *</legend>
-            <div className="wt-row">
-              <span className="wt-label">Ngày làm</span>
-              <div className="day-pick">
+            <div className="wt-grid">
+              <label>Ngày làm
+                <select value={dayPreset} onChange={(e) => pickDays(e.target.value)}>
+                  <option value="">Chọn ngày làm</option>
+                  {DAY_PRESETS.map(([k, label]) => <option key={k} value={k}>{label}</option>)}
+                  <option value="custom">Tự chọn từng ngày</option>
+                </select>
+              </label>
+              <label>Ca mẫu (chọn nhanh)
+                <select value="" onChange={(e) => pickShift(e.target.value)}>
+                  <option value="">Chọn ca có sẵn</option>
+                  {SHIFT_PRESETS.map(([label], i) => <option key={label} value={i}>{label}</option>)}
+                </select>
+              </label>
+              <label>Giờ bắt đầu
+                <select value={wt.start} onChange={(e) => changeWt({ ...wt, start: e.target.value })}>
+                  <option value="">Chọn giờ</option>
+                  {timeOpts(wt.start).filter((t) => t !== '24:00').map((t) => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </label>
+              <label>Giờ kết thúc
+                <select value={wt.end} onChange={(e) => changeWt({ ...wt, end: e.target.value })}>
+                  <option value="">Chọn giờ</option>
+                  {timeOpts(wt.end).filter((t) => !wt.start || t > wt.start).map((t) => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </label>
+            </div>
+            {dayPreset === 'custom' && (
+              <div className="day-pick" role="group" aria-label="Chọn từng ngày">
                 {DAYS.map((d) => (
-                  <button key={d} type="button" className={wt.days.includes(d) ? 'on' : ''}
-                    aria-pressed={wt.days.includes(d)} onClick={() => toggleDay(d)}>{d}</button>
+                  <label key={d} className={`day-check ${wt.days.includes(d) ? 'on' : ''}`}>
+                    <input type="checkbox" checked={wt.days.includes(d)} onChange={() => toggleDay(d)} />
+                    {DAY_NAMES[d]}
+                  </label>
                 ))}
               </div>
-              <div className="day-quick">
-                {QUICK.map(([label, days]) => (
-                  <button key={label} type="button" className="link-btn" onClick={() => changeWt({ ...wt, days })}>{label}</button>
-                ))}
-              </div>
-            </div>
-            <div className="wt-row">
-              <span className="wt-label">Khung giờ</span>
-              <div className="time-pick">
-                <input type="time" value={wt.start} onChange={(e) => changeWt({ ...wt, start: e.target.value })} aria-label="Giờ bắt đầu" />
-                <span>đến</span>
-                <input type="time" value={wt.end} onChange={(e) => changeWt({ ...wt, end: e.target.value })} aria-label="Giờ kết thúc" />
-              </div>
-            </div>
+            )}
             <label className="wt-note">Ghi chú thêm (không bắt buộc)
               <input value={wt.note} maxLength={100} placeholder="vd: có thể xoay ca, làm tối thiểu 3 buổi/tuần"
                 onChange={(e) => changeWt({ ...wt, note: e.target.value })} />

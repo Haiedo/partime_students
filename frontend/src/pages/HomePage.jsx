@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import client from '../api/client';
 import { useAuth } from '../auth/AuthContext';
-import { CATEGORIES, LOCATIONS, daysAgo, salaryText } from '../utils/format';
+import { CATEGORIES, daysAgo, salaryText } from '../utils/format';
+import { AreaFilter } from '../components/AreaSelect';
 import imgWeekend from '../assets/banner-cuoi-tuan.svg';
 import imgTet from '../assets/banner-tet.svg';
 import imgEmployer from '../assets/banner-nha-tuyen-dung.svg';
@@ -12,14 +13,21 @@ import imgEmployer from '../assets/banner-nha-tuyen-dung.svg';
 
 // Mức lương theo giờ để lọc nhanh (gửi minSalary + salaryUnit=HOUR)
 const SALARY = [['', 'Mọi mức lương'], ['25000', 'Từ 25.000đ/giờ'], ['30000', 'Từ 30.000đ/giờ'], ['35000', 'Từ 35.000đ/giờ']];
-const EMPTY = { keyword: '', category: '', location: '', minSalary: '', sort: 'newest' };
-const FILTER_KEYS = ['keyword', 'category', 'location', 'minSalary'];
+// Lọc theo thời gian rảnh: ngày trong tuần và buổi (backend so với ca làm của tin)
+const DAY_OPTS = [['', 'Mọi ngày trong tuần'], ['T2,T3,T4,T5,T6', 'Thứ 2 – Thứ 6'], ['T7,CN', 'Cuối tuần (T7, CN)'],
+  ['T2', 'Thứ 2'], ['T3', 'Thứ 3'], ['T4', 'Thứ 4'], ['T5', 'Thứ 5'], ['T6', 'Thứ 6'], ['T7', 'Thứ 7'], ['CN', 'Chủ nhật']];
+const SHIFT_OPTS = [['', 'Mọi buổi'], ['SANG', 'Buổi sáng (trước 12h)'], ['CHIEU', 'Buổi chiều (12h – 18h)'],
+  ['TOI', 'Buổi tối (từ 18h)'], ['SANG,CHIEU', 'Sáng hoặc chiều'], ['CHIEU,TOI', 'Chiều hoặc tối']];
+const EMPTY = { keyword: '', category: '', location: '', minSalary: '', days: '', shifts: '', sort: 'newest' };
+const FILTER_KEYS = ['keyword', 'category', 'location', 'minSalary', 'days', 'shifts'];
 
 // Nhãn hiển thị cho từng bộ lọc đang áp dụng
 function filterLabel(key, value) {
   if (key === 'keyword') return `Từ khóa: "${value}"`;
   if (key === 'category') return `Ngành: ${value}`;
   if (key === 'location') return `Địa điểm: ${value}`;
+  if (key === 'days') return `Rảnh: ${DAY_OPTS.find(([v]) => v === value)?.[1] || value}`;
+  if (key === 'shifts') return SHIFT_OPTS.find(([v]) => v === value)?.[1] || value;
   return SALARY.find(([v]) => v === value)?.[1] || value;
 }
 
@@ -125,20 +133,33 @@ export default function HomePage() {
     <div className="home">
       {/* Thanh tìm kiếm */}
       <form className="search-band" onSubmit={search}>
-        <input className={query.keyword ? 'set' : ''} placeholder="Tìm việc part-time: phục vụ, gia sư, bán hàng..." value={form.keyword}
-          onChange={(e) => setForm({ ...form, keyword: e.target.value })} />
-        <select className={query.category ? 'set' : ''} value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
-          <option value="">Tất cả ngành nghề</option>
-          {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
-        </select>
-        <select className={query.location ? 'set' : ''} value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })}>
-          <option value="">Tất cả địa điểm</option>
-          {LOCATIONS.map((c) => <option key={c}>{c}</option>)}
-        </select>
-        <select className={query.minSalary ? 'set' : ''} value={form.minSalary} onChange={(e) => setForm({ ...form, minSalary: e.target.value })}>
-          {SALARY.map(([v, t]) => <option key={v} value={v}>{t}</option>)}
-        </select>
-        <button className="btn blue">Tìm kiếm</button>
+        <div className="sb-main">
+          <input className={query.keyword ? 'set' : ''} placeholder="Tìm việc part-time: phục vụ, gia sư, bán hàng..." value={form.keyword}
+            onChange={(e) => setForm({ ...form, keyword: e.target.value })} aria-label="Từ khóa" />
+          <button className="btn blue">Tìm kiếm</button>
+        </div>
+        <div className="sb-filters">
+          <select className={query.category ? 'set' : ''} value={form.category} aria-label="Ngành nghề"
+            onChange={(e) => setForm({ ...form, category: e.target.value })}>
+            <option value="">Tất cả ngành nghề</option>
+            {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
+          </select>
+          <AreaFilter className={query.location ? 'set' : ''} value={form.location}
+            onChange={(v) => setForm({ ...form, location: v })} />
+          <select className={query.minSalary ? 'set' : ''} value={form.minSalary} aria-label="Mức lương"
+            onChange={(e) => setForm({ ...form, minSalary: e.target.value })}>
+            {SALARY.map(([v, t]) => <option key={v} value={v}>{t}</option>)}
+          </select>
+          {/* Thời gian rảnh của sinh viên */}
+          <select className={query.days ? 'set' : ''} value={form.days} aria-label="Ngày rảnh"
+            onChange={(e) => setForm({ ...form, days: e.target.value })}>
+            {DAY_OPTS.map(([v, t]) => <option key={v} value={v}>{t}</option>)}
+          </select>
+          <select className={query.shifts ? 'set' : ''} value={form.shifts} aria-label="Buổi rảnh"
+            onChange={(e) => setForm({ ...form, shifts: e.target.value })}>
+            {SHIFT_OPTS.map(([v, t]) => <option key={v} value={v}>{t}</option>)}
+          </select>
+        </div>
       </form>
 
       {/* Banner quảng cáo */}
