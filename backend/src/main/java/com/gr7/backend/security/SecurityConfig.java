@@ -50,6 +50,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/api/auth/register", "/api/auth/login", "/api/hello", "/error").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/auth/google", "/api/auth/social/complete").permitAll()
                 .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
                 // Thứ tự quan trọng – luật cụ thể đặt trước luật chung
                 .requestMatchers(HttpMethod.GET, "/api/jobs/*/applications").hasRole("EMPLOYER")

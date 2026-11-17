@@ -15,7 +15,8 @@ public class User {
     @Column(nullable = false, unique = true, length = 255)
     private String email;
 
-    @Column(name = "password_hash", nullable = false, length = 255)
+    /** NULL nếu tài khoản chỉ đăng nhập bằng Google / Facebook. */
+    @Column(name = "password_hash", length = 255)
     private String passwordHash;
 
     @Enumerated(EnumType.STRING)
