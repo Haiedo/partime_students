@@ -42,6 +42,10 @@ public class JobPost {
     @Column(name = "work_time", nullable = false, length = 200)
     private String workTime;
 
+    /** Ca làm theo tuần (21 bit), tự quy từ work_time mỗi khi lưu tin – dùng để lọc theo thời gian rảnh. */
+    @Column(name = "shift_slots", nullable = false)
+    private int shiftSlots = WorkTimeSlots.ALL;
+
     @Column(nullable = false)
     private Integer slots = 1;
 
@@ -59,10 +63,16 @@ public class JobPost {
     private LocalDateTime updatedAt;
 
     @PrePersist
-    void onCreate() { createdAt = LocalDateTime.now(); }
+    void onCreate() {
+        createdAt = LocalDateTime.now();
+        shiftSlots = WorkTimeSlots.fromText(workTime);
+    }
 
     @PreUpdate
-    void onUpdate() { updatedAt = LocalDateTime.now(); }
+    void onUpdate() {
+        updatedAt = LocalDateTime.now();
+        shiftSlots = WorkTimeSlots.fromText(workTime);
+    }
 
     public Long getId() { return id; }
     public EmployerProfile getEmployer() { return employer; }
@@ -82,7 +92,11 @@ public class JobPost {
     public SalaryUnit getSalaryUnit() { return salaryUnit; }
     public void setSalaryUnit(SalaryUnit salaryUnit) { this.salaryUnit = salaryUnit; }
     public String getWorkTime() { return workTime; }
-    public void setWorkTime(String workTime) { this.workTime = workTime; }
+    public void setWorkTime(String workTime) {
+        this.workTime = workTime;
+        this.shiftSlots = WorkTimeSlots.fromText(workTime);
+    }
+    public int getShiftSlots() { return shiftSlots; }
     public Integer getSlots() { return slots; }
     public void setSlots(Integer slots) { this.slots = slots; }
     public JobStatus getStatus() { return status; }

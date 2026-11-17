@@ -19,7 +19,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** Đăng ký, đăng nhập, lấy thông tin người đang đăng nhập (PB-01, PB-02). */
+/** Đăng ký, đăng nhập, lấy thông tin người đang đăng nhập (PB-01, PB-02); phần tạo tài khoản dùng chung với PB-17, PB-18. */
 @Service
 public class AuthService {
 
@@ -43,14 +43,24 @@ public class AuthService {
     @Transactional
     public UserResponse register(RegisterRequest req) {
         String email = req.email().trim().toLowerCase();
+        User user = createAccount(email, passwordEncoder.encode(req.password()), req.fullName(), Role.valueOf(req.role()));
+        return UserResponse.from(user);
+    }
+
+    /**
+     * Dùng chung cho đăng ký bằng email và đăng ký lần đầu bằng Google / Facebook.
+     * passwordHash = null khi tài khoản chỉ đăng nhập bằng mạng xã hội.
+     */
+    @Transactional
+    public User createAccount(String email, String passwordHash, String fullName, Role role) {
         if (users.existsByEmail(email)) {
             throw new ApiException(HttpStatus.CONFLICT, "Email đã được sử dụng");
         }
         User user = new User();
         user.setEmail(email);
-        user.setPasswordHash(passwordEncoder.encode(req.password()));
-        user.setFullName(req.fullName().trim());
-        user.setRole(Role.valueOf(req.role()));
+        user.setPasswordHash(passwordHash);
+        user.setFullName(fullName.trim());
+        user.setRole(role);
         user = users.save(user);
 
         if (user.getRole() == Role.STUDENT) {
@@ -64,15 +74,21 @@ public class AuthService {
             p.setContactEmail(email);
             employers.save(p);
         }
-        return UserResponse.from(user);
+        return user;
     }
 
     /** Sai email hoặc mật khẩu → 401 (không nói rõ sai cái nào); tài khoản bị khóa → 403. */
     @Transactional(readOnly = true)
     public AuthResponse login(LoginRequest req) {
+        // Tài khoản tạo bằng Google / Facebook chưa có mật khẩu -> cũng báo sai email/mật khẩu
         User user = users.findByEmail(req.email().trim().toLowerCase())
-                .filter(u -> passwordEncoder.matches(req.password(), u.getPasswordHash()))
+                .filter(u -> u.getPasswordHash() != null && passwordEncoder.matches(req.password(), u.getPasswordHash()))
                 .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "Email hoặc mật khẩu không đúng"));
+        return issueToken(user);
+    }
+
+    /** Cấp token đăng nhập; tài khoản bị khóa → 403. Dùng chung cho mọi cách đăng nhập. */
+    public AuthResponse issueToken(User user) {
         if (user.getStatus() == UserStatus.LOCKED) {
             throw new ApiException(HttpStatus.FORBIDDEN, "Tài khoản đã bị khóa, vui lòng liên hệ quản trị viên");
         }

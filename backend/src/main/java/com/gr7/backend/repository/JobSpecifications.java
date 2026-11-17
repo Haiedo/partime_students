@@ -14,13 +14,15 @@ import java.util.List;
 /**
  * Điều kiện tìm kiếm động cho GET /api/jobs (PB-07).
  * Chỉ lấy tin đang tuyển (OPEN) và chưa bị ẩn; mỗi bộ lọc có giá trị thì thêm một điều kiện AND.
+ * Lọc thời gian rảnh (days, shifts) dùng cột shift_slots, xem WorkTimeSlots.
  */
 public final class JobSpecifications {
 
     private JobSpecifications() {}
 
     public static Specification<JobPost> search(String keyword, String category, String location,
-                                                BigDecimal minSalary, BigDecimal maxSalary, SalaryUnit unit) {
+                                                BigDecimal minSalary, BigDecimal maxSalary, SalaryUnit unit,
+                                                Integer timeMask) {
         return (root, query, cb) -> {
             List<Predicate> ps = new ArrayList<>();
             ps.add(cb.equal(root.get("status"), JobStatus.OPEN));
@@ -51,6 +53,13 @@ public final class JobSpecifications {
             if (maxSalary != null) {
                 Expression<BigDecimal> low = cb.coalesce(root.<BigDecimal>get("salaryMin"), root.<BigDecimal>get("salaryMax"));
                 ps.add(cb.lessThanOrEqualTo(low, maxSalary));
+            }
+            // Thời gian rảnh: tin có ít nhất một buổi trùng với các ngày/buổi sinh viên chọn
+            // bitand là hàm có sẵn của Hibernate, với MySQL được dịch thành (shift_slots & mask)
+            if (timeMask != null) {
+                Expression<Integer> overlap = cb.function("bitand", Integer.class,
+                        root.<Integer>get("shiftSlots"), cb.literal(timeMask));
+                ps.add(cb.notEqual(overlap, 0));
             }
             return cb.and(ps.toArray(new Predicate[0]));
         };
