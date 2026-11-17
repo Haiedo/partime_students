@@ -18,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 /**
- * Đăng, sửa, xóa, đóng tin (PB-05, PB-06).
+ * Đăng, sửa, xóa, đóng tin (PB-05, PB-06), cập nhật trạng thái công việc (PB-12).
  * Mọi thao tác sửa/xóa/đóng đều kiểm tra tin thuộc nhà tuyển dụng đang đăng nhập, khác -> 403.
  */
 @Service
@@ -70,6 +70,24 @@ public class JobService {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Tin này đã được đóng trước đó");
         }
         j.setStatus(JobStatus.CLOSED);
+        return JobResponse.from(j);
+    }
+
+    /**
+     * Cập nhật trạng thái công việc (PB-12): chỉ OPEN → FILLED → COMPLETED.
+     * Chuyển sang "Đã đủ người" cần có ít nhất 1 ứng viên đã được nhận.
+     */
+    @Transactional
+    public JobResponse changeStatus(Long userId, Long jobId, JobStatus next) {
+        JobPost j = ownedJob(userId, jobId);
+        if (!j.getStatus().canMoveTo(next)) {
+            throw new ApiException(HttpStatus.BAD_REQUEST,
+                    "Chỉ được chuyển lần lượt: Đang tuyển → Đã đủ người → Hoàn thành");
+        }
+        if (next == JobStatus.FILLED && applications.countByJobIdAndStatus(jobId, ApplicationStatus.ACCEPTED) == 0) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Tin chưa nhận ứng viên nào, chưa thể chuyển sang Đã đủ người");
+        }
+        j.setStatus(next);
         return JobResponse.from(j);
     }
 

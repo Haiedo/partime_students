@@ -2,6 +2,7 @@ package com.gr7.backend.controller;
 
 import com.gr7.backend.dto.JobRequest;
 import com.gr7.backend.dto.JobResponse;
+import com.gr7.backend.dto.JobStatusRequest;
 import com.gr7.backend.security.CurrentUser;
 import com.gr7.backend.service.JobService;
 import jakarta.validation.Valid;
@@ -11,7 +12,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
-/** Đăng / sửa / xóa / đóng tin – chỉ vai trò EMPLOYER (khai báo trong SecurityConfig). */
+/** Đăng / sửa / xóa / đóng tin, đổi trạng thái công việc – chỉ vai trò EMPLOYER (khai báo trong SecurityConfig). */
 @RestController
 @RequestMapping("/api/jobs")
 public class JobController {
@@ -37,6 +38,13 @@ public class JobController {
     public ResponseEntity<Void> delete(@AuthenticationPrincipal Jwt jwt, @PathVariable Long id) {
         service.delete(CurrentUser.id(jwt), id);
         return ResponseEntity.noContent().build();
+    }
+
+    /** PB-12: {"status":"FILLED"} hoặc {"status":"COMPLETED"}; sai thứ tự → 400. */
+    @PatchMapping("/{id}/status")
+    public JobResponse changeStatus(@AuthenticationPrincipal Jwt jwt, @PathVariable Long id,
+                                    @Valid @RequestBody JobStatusRequest req) {
+        return service.changeStatus(CurrentUser.id(jwt), id, req.status());
     }
 
     @PatchMapping("/{id}/close")
