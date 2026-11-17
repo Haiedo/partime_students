@@ -8,4 +8,5 @@ import java.util.List;
 public interface ReviewRepository extends JpaRepository<Review, Long> {
     boolean existsByApplicationIdAndReviewerId(Long applicationId, Long reviewerId);
     List<Review> findByRevieweeIdOrderByCreatedAtDesc(Long revieweeId);
+    List<Review> findByReviewerIdOrderByCreatedAtDesc(Long reviewerId);
 }
