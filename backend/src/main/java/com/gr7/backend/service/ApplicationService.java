@@ -5,6 +5,7 @@ import com.gr7.backend.dto.MyApplicationResponse;
 import com.gr7.backend.entity.Application;
 import com.gr7.backend.entity.JobPost;
 import com.gr7.backend.entity.JobStatus;
+import com.gr7.backend.entity.NotificationType;
 import com.gr7.backend.entity.StudentProfile;
 import com.gr7.backend.exception.ApiException;
 import com.gr7.backend.repository.ApplicationRepository;
@@ -17,19 +18,21 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-/** Ứng tuyển và theo dõi đơn (PB-09, PB-10). */
+/** Ứng tuyển và theo dõi đơn (PB-09, PB-10); có đơn mới thì báo cho nhà tuyển dụng (PB-14). */
 @Service
 public class ApplicationService {
 
     private final ApplicationRepository applications;
     private final JobPostRepository jobs;
     private final StudentProfileRepository students;
+    private final NotificationService notifications;
 
     public ApplicationService(ApplicationRepository applications, JobPostRepository jobs,
-                              StudentProfileRepository students) {
+                              StudentProfileRepository students, NotificationService notifications) {
         this.applications = applications;
         this.jobs = jobs;
         this.students = students;
+        this.notifications = notifications;
     }
 
     /**
@@ -56,7 +59,12 @@ public class ApplicationService {
                 ? null : req.coverLetter().trim());
         a.setCvUrl(s.getCvUrl());
         try {
-            return MyApplicationResponse.from(applications.saveAndFlush(a));
+            Application saved = applications.saveAndFlush(a);
+            // PB-14: báo cho nhà tuyển dụng có đơn mới
+            notifications.create(j.getEmployer().getUser(), NotificationType.NEW_APPLICATION,
+                    s.getUser().getFullName() + " vừa ứng tuyển tin " + NotificationService.quote(j.getTitle()),
+                    "/employer/jobs/" + j.getId() + "/applicants");
+            return MyApplicationResponse.from(saved);
         } catch (DataIntegrityViolationException e) {
             // Hai yêu cầu gửi cùng lúc: khóa UNIQUE(job_id, student_id) trong CSDL chặn lại
             throw new ApiException(HttpStatus.CONFLICT, "Bạn đã ứng tuyển tin này rồi");

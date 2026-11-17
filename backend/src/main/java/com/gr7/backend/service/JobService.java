@@ -7,6 +7,7 @@ import com.gr7.backend.entity.ApplicationStatus;
 import com.gr7.backend.entity.EmployerProfile;
 import com.gr7.backend.entity.JobPost;
 import com.gr7.backend.entity.JobStatus;
+import com.gr7.backend.entity.NotificationType;
 import com.gr7.backend.exception.ApiException;
 import com.gr7.backend.repository.ApplicationRepository;
 import com.gr7.backend.repository.EmployerProfileRepository;
@@ -27,11 +28,14 @@ public class JobService {
     private final JobPostRepository jobs;
     private final EmployerProfileRepository employers;
     private final ApplicationRepository applications;
+    private final NotificationService notifications;
 
-    public JobService(JobPostRepository jobs, EmployerProfileRepository employers, ApplicationRepository applications) {
+    public JobService(JobPostRepository jobs, EmployerProfileRepository employers, ApplicationRepository applications,
+                      NotificationService notifications) {
         this.jobs = jobs;
         this.employers = employers;
         this.applications = applications;
+        this.notifications = notifications;
     }
 
     @Transactional
@@ -88,6 +92,13 @@ public class JobService {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Tin chưa nhận ứng viên nào, chưa thể chuyển sang Đã đủ người");
         }
         j.setStatus(next);
+        // PB-14: báo cho các sinh viên đã được nhận
+        String msg = next == JobStatus.FILLED
+                ? "Tin " + NotificationService.quote(j.getTitle()) + " đã đủ người, công việc sắp bắt đầu"
+                : "Công việc " + NotificationService.quote(j.getTitle()) + " đã hoàn thành, hãy đánh giá nhà tuyển dụng";
+        applications.findByJobIdAndStatus(jobId, ApplicationStatus.ACCEPTED).forEach(a ->
+                notifications.create(a.getStudent().getUser(), NotificationType.JOB_STATUS_CHANGED, msg,
+                        "/student/applications"));
         return JobResponse.from(j);
     }
 
