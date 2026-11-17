@@ -4,6 +4,7 @@ import com.gr7.backend.dto.ApplicantResponse;
 import com.gr7.backend.entity.Application;
 import com.gr7.backend.entity.ApplicationStatus;
 import com.gr7.backend.entity.JobPost;
+import com.gr7.backend.entity.NotificationType;
 import com.gr7.backend.exception.ApiException;
 import com.gr7.backend.repository.ApplicationRepository;
 import com.gr7.backend.repository.JobPostRepository;
@@ -19,10 +20,13 @@ public class ApplicantService {
 
     private final ApplicationRepository applications;
     private final JobPostRepository jobs;
+    private final NotificationService notifications;
 
-    public ApplicantService(ApplicationRepository applications, JobPostRepository jobs) {
+    public ApplicantService(ApplicationRepository applications, JobPostRepository jobs,
+                            NotificationService notifications) {
         this.applications = applications;
         this.jobs = jobs;
+        this.notifications = notifications;
     }
 
     @Transactional(readOnly = true)
@@ -48,6 +52,13 @@ public class ApplicantService {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Đơn này đã được xử lý trước đó");
         }
         a.setStatus(status);
+        // PB-14: báo kết quả cho sinh viên
+        boolean ok = status == ApplicationStatus.ACCEPTED;
+        notifications.create(a.getStudent().getUser(),
+                ok ? NotificationType.APPLICATION_ACCEPTED : NotificationType.APPLICATION_REJECTED,
+                (ok ? "Chúc mừng, bạn đã được nhận vào tin " : "Đơn của bạn chưa phù hợp với tin ")
+                        + NotificationService.quote(a.getJob().getTitle()),
+                "/student/applications");
         return ApplicantResponse.from(applications.saveAndFlush(a));
     }
 
