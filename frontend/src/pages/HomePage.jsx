@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import client from '../api/client';
+import client, { errorMessage } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { CATEGORIES, daysAgo, salaryText } from '../utils/format';
 import { AreaFilter } from '../components/AreaSelect';
@@ -8,7 +8,7 @@ import imgWeekend from '../assets/banner-cuoi-tuan.svg';
 import imgTet from '../assets/banner-tet.svg';
 import imgEmployer from '../assets/banner-nha-tuyen-dung.svg';
 
-// MH-02 – Trang chủ: banner quảng cáo + tìm kiếm + danh sách việc làm (PB-07, PB-08)
+// MH-02 – Trang chủ: banner quảng cáo + tìm kiếm + danh sách việc làm (PB-07, PB-08) + nút Lưu tin (PB-20)
 // Danh sách gọi GET /api/jobs: lọc theo từ khóa, ngành, địa điểm, mức lương; sắp xếp; phân trang.
 
 // Mức lương theo giờ để lọc nhanh (gửi minSalary + salaryUnit=HOUR)
@@ -65,6 +65,8 @@ export default function HomePage() {
   const [counts, setCounts] = useState({}); // số tin đang tuyển theo ngành (GET /api/jobs/categories)
   const [data, setData] = useState(null);
   const [state, setState] = useState('loading'); // loading | ok | unavailable
+  const [savedIds, setSavedIds] = useState(new Set());   // tin SV đã lưu (PB-20)
+  const [saveMsg, setSaveMsg] = useState('');
   const listRef = useRef(null);
   const scrollNext = useRef(false); // bấm Tìm kiếm / chọn ngành -> cuộn xuống kết quả khi tải xong
 
@@ -101,6 +103,28 @@ export default function HomePage() {
       .then((res) => setCounts(Object.fromEntries(res.data.map((c) => [c.category, c.count]))))
       .catch(() => {});
   }, []);
+
+  // Sinh viên: biết tin nào đã lưu để hiện nút Lưu tin / Đã lưu trên thẻ tin
+  useEffect(() => {
+    if (user?.role !== 'STUDENT') return;
+    client.get('/api/students/me/saved-jobs', { params: { size: 100 } })
+      .then((res) => setSavedIds(new Set(res.data.content.map((x) => x.jobId))))
+      .catch(() => {});
+  }, [user]);
+
+  const toggleSave = async (jobId) => {
+    const on = savedIds.has(jobId);
+    try {
+      if (on) await client.delete(`/api/students/me/saved-jobs/${jobId}`);
+      else await client.put(`/api/students/me/saved-jobs/${jobId}`);
+      const next = new Set(savedIds);
+      if (on) next.delete(jobId); else next.add(jobId);
+      setSavedIds(next);
+      setSaveMsg('');
+    } catch (err) {
+      setSaveMsg(errorMessage(err));
+    }
+  };
 
   const search = (e) => {
     e?.preventDefault();
@@ -224,6 +248,7 @@ export default function HomePage() {
       {/* Danh sách việc + cột phải */}
       <section className="main-cols">
         <div className="job-col" ref={listRef}>
+          {saveMsg && <p className="alert error">{saveMsg}</p>}
           <div className={`card list-head ${active.length ? 'filtered' : ''}`}>
             <div className="crumb">Trang chủ / Việc làm part-time{query.category && ` / ${query.category}`}</div>
             <div className="list-title">
@@ -285,7 +310,15 @@ export default function HomePage() {
                 </div>
                 <div className="job-side">
                   <span className="when">{daysAgo(j.createdAt)}</span>
-                  <Link to={`/jobs/${j.id}`} className="btn ghost small">Xem chi tiết</Link>
+                  <div className="row-btns">
+                    {user?.role === 'STUDENT' && (
+                      <button type="button" className={`btn small save-mini ${savedIds.has(j.id) ? 'on' : ''}`}
+                        aria-pressed={savedIds.has(j.id)} onClick={() => toggleSave(j.id)}>
+                        {savedIds.has(j.id) ? 'Đã lưu' : 'Lưu tin'}
+                      </button>
+                    )}
+                    <Link to={`/jobs/${j.id}`} className="btn ghost small">Xem chi tiết</Link>
+                  </div>
                 </div>
               </article>
 

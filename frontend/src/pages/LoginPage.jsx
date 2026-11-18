@@ -3,9 +3,10 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { homeOf, useAuth } from '../auth/AuthContext';
 import { errorMessage } from '../api/client';
 import { AuthAside, PasswordInput } from '../components/ui';
+import { SocialLogin } from '../components/SocialLogin';
 import loginArt from '../assets/dang-nhap.svg';
 
-// MH-01 – Đăng nhập (B6-08)
+// MH-01 – Đăng nhập (B6-08); thêm Tiếp tục với Google (PB-17) và Quên mật khẩu (PB-19)
 export default function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -44,11 +45,14 @@ export default function LoginPage() {
         <h1>Chào mừng trở lại</h1>
         <p className="lead">Đăng nhập để tiếp tục tìm việc hoặc quản lý tin tuyển dụng.</p>
         {location.state?.registered && <p className="alert success">Đăng ký thành công, mời bạn đăng nhập</p>}
+        {location.state?.reset && <p className="alert success">Đã đổi mật khẩu, mời bạn đăng nhập bằng mật khẩu mới</p>}
+        <SocialLogin onError={setError} from={location.state?.from} />
         <form onSubmit={onSubmit} noValidate>
           <label>Email
             <input name="email" type="email" value={form.email} onChange={onChange} placeholder="vd: sv1@gr7.vn" />
           </label>
-          <label>Mật khẩu
+          <label>
+            <span className="label-row">Mật khẩu <Link to="/forgot-password" className="forgot-link">Quên mật khẩu?</Link></span>
             <PasswordInput name="password" value={form.password} onChange={onChange} placeholder="Nhập mật khẩu" />
           </label>
           {error && <p className="alert error">{error}</p>}

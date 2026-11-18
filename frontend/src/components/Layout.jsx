@@ -3,7 +3,7 @@ import { useAuth } from '../auth/AuthContext';
 import Footer from './Footer';
 
 const MENU = {
-  STUDENT: [['Việc làm', '/'], ['Đơn của tôi', '/student/applications'], ['Hồ sơ', '/student/profile']],
+  STUDENT: [['Việc làm', '/'], ['Việc đã lưu', '/student/saved'], ['Đơn của tôi', '/student/applications'], ['Hồ sơ', '/student/profile']],
   EMPLOYER: [['Tin của tôi', '/employer/jobs'], ['Hồ sơ công ty', '/employer/profile']],
   ADMIN: [['Quản trị', '/admin']],
 };
