@@ -598,3 +598,43 @@ img { max-width: 100%; }
   .search-band .sb-main, .search-band .sb-filters { grid-template-columns: 1fr; }
   .area-select, .wt-grid { grid-template-columns: 1fr; }
 }
+
+/* ===== đăng nhập Google, chọn vai trò, quên mật khẩu, việc đã lưu ===== */
+.social { display: flex; flex-direction: column; gap: 10px; margin-bottom: 4px; }
+.social-btn { position: relative; }
+.social-btn .btn { border-color: #D9DCE3; color: var(--chu); }
+.social-btn .btn:not(:disabled):hover { border-color: var(--tim); background: var(--tim-nhat); }
+/* Nút của Google nằm trên cùng, gần như trong suốt: người dùng thấy nút của trang nhưng bấm vào nút Google */
+.social-overlay { position: absolute; inset: 0; opacity: .01; overflow: hidden; display: none; }
+.social-overlay.ready { display: block; }
+.social-overlay iframe { width: 100% !important; }
+.or-line { display: flex; align-items: center; gap: 12px; color: var(--phu); font-size: 13px; margin: 6px 0 14px; }
+.or-line::before, .or-line::after { content: ''; flex: 1; height: 1px; background: var(--vien); }
+.label-row { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.forgot-link { font-size: 13px; font-weight: 600; }
+.role-switch.big .role { padding: 16px; gap: 4px; }
+.role-switch.big .role b { font-size: 16px; }
+.next-steps { margin: 16px 0 20px 18px; display: flex; flex-direction: column; gap: 8px; font-size: 14px; color: var(--chu); line-height: 1.5; }
+.save-btn { margin-top: 10px; background: #fff; color: var(--tim-dam); border-color: #D9DCE3; }
+.save-btn:hover { border-color: var(--tim); }
+.save-btn.on { background: #FFF8DB; border-color: #FBE08A; color: #8A6100; }
+.saved-job.is-closed { background: #FAFAFB; }
+.saved-job.is-closed .job-title { color: #6B7280; }
+.row-btns { display: flex; gap: 6px; align-items: center; }
+.save-mini { background: #fff; color: var(--tim-dam); border-color: #D9DCE3; }
+.save-mini:hover { border-color: var(--tim); }
+.save-mini.on { background: #FFF8DB; border-color: #FBE08A; color: #8A6100; }
+.empty-box { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
+@media (max-width: 640px) {
+  .saved-job { flex-wrap: wrap; }
+  .saved-job .job-side { width: 100%; flex-direction: row; align-items: center; }
+  .role-switch.big { grid-template-columns: 1fr; }
+}
+
+/* ===== Sprint 4: hộp thoại đánh giá 1–5 điểm (PB-13) ===== */
+.rate-pick { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.rate-pick button { width: 44px; height: 44px; font: inherit; font-size: 17px; font-weight: 800; color: var(--tim-dam); background: #fff; border: 1.5px solid #D9DCE3; border-radius: 10px; cursor: pointer; transition: background .15s, border-color .15s; }
+.rate-pick button:hover { border-color: var(--tim); }
+.rate-pick button.on { background: var(--vang); border-color: #D9AE00; }
+.rate-text { font-size: 14px; font-weight: 600; color: var(--tim-dam); margin-left: 4px; }
+.rated { font-size: 12.5px; font-weight: 700; color: var(--tim); background: var(--tim-nhat); border-radius: 12px; padding: 4px 10px; }
