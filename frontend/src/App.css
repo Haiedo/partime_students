@@ -638,3 +638,23 @@ img { max-width: 100%; }
 .rate-pick button.on { background: var(--vang); border-color: #D9AE00; }
 .rate-text { font-size: 14px; font-weight: 600; color: var(--tim-dam); margin-left: 4px; }
 .rated { font-size: 12.5px; font-weight: 700; color: var(--tim); background: var(--tim-nhat); border-radius: 12px; padding: 4px 10px; }
+
+/* ===== Sprint 4: chuông thông báo (PB-14) ===== */
+.bell { position: relative; margin-right: 6px; }
+.bell-btn { font: inherit; font-size: 14px; font-weight: 600; color: #fff; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.35); border-radius: 20px; padding: 7px 14px; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+.bell-btn:hover { background: rgba(255,255,255,.22); }
+.bell-btn b { min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px; background: var(--vang); color: var(--tim-dam); font-size: 12px; display: inline-flex; align-items: center; justify-content: center; }
+.bell-panel { position: absolute; right: 0; top: calc(100% + 10px); width: 360px; max-height: 440px; overflow: auto; background: #fff; color: var(--chu); border-radius: 14px; box-shadow: 0 18px 44px rgba(16,24,40,.28); z-index: 40; animation: pageIn .2s ease both; }
+.bell-head { position: sticky; top: 0; display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: #fff; border-bottom: 1px solid var(--vien); }
+.bell-head button { font: inherit; font-size: 13px; font-weight: 600; color: var(--tim); background: none; border: none; cursor: pointer; text-decoration: underline; }
+.bell-empty { padding: 22px 16px; color: var(--phu); font-size: 14px; }
+.bell-panel ul { list-style: none; margin: 0; padding: 0; }
+.bell-panel li button { width: 100%; text-align: left; font: inherit; font-size: 14px; color: #374151; background: #fff; border: none; border-bottom: 1px solid #F1F2F5; padding: 12px 16px; cursor: pointer; display: flex; flex-direction: column; gap: 4px; }
+.bell-panel li button:hover { background: #FAFAFC; }
+.bell-panel li button.unread { background: var(--tim-nhat); font-weight: 600; color: var(--tim-dam); }
+.bell-panel li small { font-size: 12px; font-weight: 400; color: var(--phu); }
+@media (max-width: 640px) {
+  .bell { order: 1; }
+  .bell-btn { padding: 6px 10px; }
+  .bell-panel { position: fixed; left: 12px; right: 12px; top: 64px; width: auto; }
+}

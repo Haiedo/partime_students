@@ -1,9 +1,10 @@
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import Footer from './Footer';
+import NotificationBell from './NotificationBell';
 
 const MENU = {
-  STUDENT: [['Việc làm', '/'], ['Đơn của tôi', '/student/applications'], ['Hồ sơ', '/student/profile']],
+  STUDENT: [['Việc làm', '/'], ['Việc đã lưu', '/student/saved'], ['Đơn của tôi', '/student/applications'], ['Hồ sơ', '/student/profile']],
   EMPLOYER: [['Tin của tôi', '/employer/jobs'], ['Hồ sơ công ty', '/employer/profile']],
   ADMIN: [['Quản trị', '/admin']],
 };
@@ -35,6 +36,7 @@ export default function Layout() {
         <span className="spacer" />
         {user ? (
           <>
+            <NotificationBell />
             <span className="who">
               <span className="avatar">{initials(user.fullName)}</span>
               <span className="who-text"><b>{user.fullName}</b><small>{ROLE_NAME[user.role]}</small></span>
