@@ -2,12 +2,14 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import client, { API_URL, errorMessage } from '../api/client';
 import { initials } from '../components/Layout';
+import ReviewDialog from '../components/ReviewDialog';
 import { Confirm, StatusBadge, Toast } from '../components/ui';
 import { APP_STATUS, JOB_STATUS, dateText, salaryText } from '../utils/format';
 
 const TABS = [['PENDING', 'Chờ duyệt'], ['ACCEPTED', 'Đã nhận'], ['REJECTED', 'Đã từ chối'], ['ALL', 'Tất cả']];
 
-// MH-09 – Danh sách ứng viên của một tin, duyệt / từ chối (PB-11)
+// MH-09 – Danh sách ứng viên của một tin, duyệt / từ chối (PB-11).
+// Tin đã hoàn thành thì có nút đánh giá từng sinh viên đã được nhận (PB-13).
 export default function ApplicantsPage() {
   const { id } = useParams();
   const [job, setJob] = useState(null);
@@ -16,12 +18,17 @@ export default function ApplicantsPage() {
   const [tab, setTab] = useState('PENDING');
   const [ask, setAsk] = useState(null); // { app, status }
   const [busy, setBusy] = useState(false);
+  const [reviewed, setReviewed] = useState({}); // applicationId -> số điểm đã chấm
+  const [rate, setRate] = useState(null);
   const [toast, setToast] = useState({ text: '' });
   const closeToast = useCallback(() => setToast({ text: '' }), []);
 
   useEffect(() => {
     client.get(`/api/employers/me/jobs/${id}`).then((res) => setJob(res.data)).catch((err) => setError(errorMessage(err)));
     client.get(`/api/jobs/${id}/applications`).then((res) => setList(res.data)).catch((err) => setError(errorMessage(err)));
+    client.get('/api/reviews/me')
+      .then((res) => setReviewed(Object.fromEntries(res.data.map((r) => [r.applicationId, r.rating]))))
+      .catch(() => {});
   }, [id]);
 
   const decide = async () => {
@@ -112,6 +119,10 @@ export default function ApplicantsPage() {
                   <button type="button" className="btn ghost small" onClick={() => setAsk({ app: a, status: 'REJECTED' })}>Từ chối</button>
                 </div>
               )}
+              {a.status === 'ACCEPTED' && job?.status === 'COMPLETED' && !reviewed[a.id] && (
+                <button type="button" className="btn accent small" onClick={() => setRate(a)}>Đánh giá sinh viên</button>
+              )}
+              {reviewed[a.id] && <span className="rated">Đã đánh giá {reviewed[a.id]}/5</span>}
             </div>
           </article>
         ))}
@@ -129,6 +140,14 @@ export default function ApplicantsPage() {
           onOk={decide}
           onClose={() => setAsk(null)}
         />
+      )}
+      {rate && (
+        <ReviewDialog app={{ id: rate.id, jobTitle: job?.title }} who={rate.fullName} onClose={() => setRate(null)}
+          onDone={(r) => {
+            setReviewed((m) => ({ ...m, [r.applicationId]: r.rating }));
+            setRate(null);
+            setToast({ text: `Đã gửi đánh giá cho ${rate.fullName}`, type: 'success' });
+          }} />
       )}
       <Toast {...toast} onClose={closeToast} />
     </div>

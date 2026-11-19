@@ -6,13 +6,17 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import StudentProfilePage from './pages/StudentProfilePage';
 import EmployerProfilePage from './pages/EmployerProfilePage';
-import PlaceholderPage from './pages/PlaceholderPage';
 import HomePage from './pages/HomePage';
 import JobDetailPage from './pages/JobDetailPage';
 import MyApplicationsPage from './pages/MyApplicationsPage';
 import EmployerJobsPage from './pages/EmployerJobsPage';
 import JobFormPage from './pages/JobFormPage';
 import ApplicantsPage from './pages/ApplicantsPage';
+import RoleSelectPage from './pages/RoleSelectPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
+import SavedJobsPage from './pages/SavedJobsPage';
+import AdminPage from './pages/AdminPage';
 import './App.css';
 
 const SV = ['STUDENT'];
@@ -28,9 +32,13 @@ export default function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            <Route path="/social/complete" element={<RoleSelectPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/jobs/:id" element={<JobDetailPage />} />
 
             <Route path="/student/profile" element={<ProtectedRoute roles={SV}><StudentProfilePage /></ProtectedRoute>} />
+            <Route path="/student/saved" element={<ProtectedRoute roles={SV}><SavedJobsPage /></ProtectedRoute>} />
             <Route path="/student/applications" element={<ProtectedRoute roles={SV}><MyApplicationsPage /></ProtectedRoute>} />
 
             <Route path="/employer/profile" element={<ProtectedRoute roles={NTD}><EmployerProfilePage /></ProtectedRoute>} />
@@ -39,7 +47,7 @@ export default function App() {
             <Route path="/employer/jobs/:id/edit" element={<ProtectedRoute roles={NTD}><JobFormPage /></ProtectedRoute>} />
             <Route path="/employer/jobs/:id/applicants" element={<ProtectedRoute roles={NTD}><ApplicantsPage /></ProtectedRoute>} />
 
-            <Route path="/admin" element={<ProtectedRoute roles={AD}><PlaceholderPage title="Quản trị" sprint="Sprint 4" /></ProtectedRoute>} />
+            <Route path="/admin" element={<ProtectedRoute roles={AD}><AdminPage /></ProtectedRoute>} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>

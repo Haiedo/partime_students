@@ -4,13 +4,19 @@ import client, { errorMessage } from '../api/client';
 import { Confirm, StatusBadge, Toast } from '../components/ui';
 import { JOB_STATUS, dateText, salaryText } from '../utils/format';
 
-const TABS = [['OPEN', 'Đang tuyển'], ['CLOSED', 'Đã đóng'], ['ALL', 'Tất cả']];
+const TABS = [['OPEN', 'Đang tuyển'], ['CLOSED', 'Ngừng tuyển'], ['ALL', 'Tất cả']];
 
-// MH-07 – Quản lý tin của tôi (PB-05, PB-06): đóng / xóa tin phải xác nhận qua hộp thoại
+// PB-12: mỗi trạng thái chỉ có một bước tiếp theo hợp lệ
+const NEXT = {
+  OPEN: { status: 'FILLED', label: 'Đã đủ người', title: 'Chuyển sang Đã đủ người?', text: 'sẽ ngừng nhận đơn mới. Các sinh viên đã được nhận sẽ nhận thông báo.', done: 'Đã chuyển tin sang Đã đủ người' },
+  FILLED: { status: 'COMPLETED', label: 'Hoàn thành', title: 'Xác nhận công việc đã hoàn thành?', text: 'sẽ chuyển sang Hoàn thành. Sau đó bạn và sinh viên có thể đánh giá lẫn nhau.', done: 'Công việc đã hoàn thành, bạn có thể đánh giá sinh viên ở trang Xem ứng viên' },
+};
+
+// MH-07 – Quản lý tin của tôi (PB-05, PB-06, PB-12): đóng / xóa / đổi trạng thái tin phải xác nhận qua hộp thoại
 export default function EmployerJobsPage() {
   const [jobs, setJobs] = useState(null);
   const [tab, setTab] = useState('OPEN');
-  const [ask, setAsk] = useState(null); // { type: 'close' | 'delete', job }
+  const [ask, setAsk] = useState(null); // { type: 'close' | 'delete' | 'status', job }
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState({ text: '' });
   const closeToast = useCallback(() => setToast({ text: '' }), []);
@@ -25,8 +31,10 @@ export default function EmployerJobsPage() {
     setBusy(true);
     try {
       if (type === 'close') await client.patch(`/api/jobs/${job.id}/close`);
+      else if (type === 'status') await client.patch(`/api/jobs/${job.id}/status`, { status: NEXT[job.status].status });
       else await client.delete(`/api/jobs/${job.id}`);
-      setToast({ text: type === 'close' ? 'Đã đóng tin, sinh viên không ứng tuyển được nữa' : 'Đã xóa tin', type: 'success' });
+      const done = { close: 'Đã đóng tin, sinh viên không ứng tuyển được nữa', delete: 'Đã xóa tin', status: NEXT[job.status]?.done };
+      setToast({ text: done[type], type: 'success' });
       await load();
     } catch (err) {
       setToast({ text: errorMessage(err), type: 'error' });
@@ -80,6 +88,7 @@ export default function EmployerJobsPage() {
               <Link to={`/jobs/${j.id}`} className="job-title">{j.title}</Link>
               <div className="job-meta">
                 <StatusBadge map={JOB_STATUS} value={j.status} />
+                {j.hidden && <span className="badge closed">Bị quản trị viên ẩn</span>}
                 <span className="salary">{salaryText(j)}</span>
                 <span className="chip">{j.location}</span>
                 <span className="chip">{j.category}</span>
@@ -94,6 +103,9 @@ export default function EmployerJobsPage() {
             <div className="emp-actions">
               <Link to={`/employer/jobs/${j.id}/applicants`} className="btn primary small">Xem ứng viên</Link>
               {j.status === 'OPEN' && <Link to={`/employer/jobs/${j.id}/edit`} className="btn ghost small">Sửa</Link>}
+              {NEXT[j.status] && !j.hidden && j.applicationCount > 0 && (
+                <button type="button" className="btn accent small" onClick={() => setAsk({ type: 'status', job: j })}>{NEXT[j.status].label}</button>
+              )}
               {j.status === 'OPEN' && <button type="button" className="btn ghost small" onClick={() => setAsk({ type: 'close', job: j })}>Đóng tin</button>}
               {j.applicationCount === 0 && <button type="button" className="btn link small" onClick={() => setAsk({ type: 'delete', job: j })}>Xóa</button>}
             </div>
@@ -101,7 +113,17 @@ export default function EmployerJobsPage() {
         ))}
       </div>
 
-      {ask && (
+      {ask?.type === 'status' && (
+        <Confirm
+          title={NEXT[ask.job.status].title}
+          text={`Tin "${ask.job.title}" ${NEXT[ask.job.status].text}`}
+          okText={NEXT[ask.job.status].label}
+          busy={busy}
+          onOk={doAction}
+          onClose={() => setAsk(null)}
+        />
+      )}
+      {ask && ask.type !== 'status' && (
         <Confirm
           title={ask.type === 'close' ? 'Đóng tin tuyển dụng?' : 'Xóa tin tuyển dụng?'}
           text={ask.type === 'close'
