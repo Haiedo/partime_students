@@ -1,23 +1,34 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import client, { API_URL, errorMessage } from '../api/client';
 import { initials } from '../components/Layout';
-import { StatusBadge } from '../components/ui';
+import ReviewDialog from '../components/ReviewDialog';
+import { StatusBadge, Toast } from '../components/ui';
 import { APP_STATUS, JOB_STATUS, dateText, salaryText } from '../utils/format';
 
 const TABS = [['ALL', 'Tất cả'], ['PENDING', 'Đang chờ duyệt'], ['ACCEPTED', 'Đã được nhận'], ['REJECTED', 'Chưa phù hợp']];
 
-// MH-05 – Đơn ứng tuyển của tôi (PB-10): trạng thái hiển thị bằng nhãn màu
+// MH-05 – Đơn ứng tuyển của tôi (PB-10): trạng thái hiển thị bằng nhãn màu.
+// Đơn được nhận và công việc đã hoàn thành thì có nút đánh giá nhà tuyển dụng (PB-13).
 export default function MyApplicationsPage() {
   const [apps, setApps] = useState(null);
   const [error, setError] = useState('');
   const [tab, setTab] = useState('ALL');
+  const [reviewed, setReviewed] = useState({}); // applicationId -> số điểm đã chấm
+  const [rate, setRate] = useState(null);       // đơn đang mở hộp thoại đánh giá
+  const [toast, setToast] = useState({ text: '' });
+  const closeToast = useCallback(() => setToast({ text: '' }), []);
 
   useEffect(() => {
     client.get('/api/applications/me')
       .then((res) => setApps(res.data))
       .catch((err) => setError(errorMessage(err)));
+    client.get('/api/reviews/me')
+      .then((res) => setReviewed(Object.fromEntries(res.data.map((r) => [r.applicationId, r.rating]))))
+      .catch(() => {});
   }, []);
+
+  const canRate = (a) => a.status === 'ACCEPTED' && a.jobStatus === 'COMPLETED' && !reviewed[a.id];
 
   const count = (s) => (apps || []).filter((a) => s === 'ALL' || a.status === s).length;
   const shown = (apps || []).filter((a) => tab === 'ALL' || a.status === tab);
@@ -68,12 +79,24 @@ export default function MyApplicationsPage() {
             </div>
             <div className="row-side">
               <StatusBadge map={APP_STATUS} value={a.status} />
-              {a.status === 'ACCEPTED' && <small>Nhà tuyển dụng sẽ liên hệ bạn qua email hoặc số điện thoại trong hồ sơ</small>}
+              {a.status === 'ACCEPTED' && a.jobStatus === 'OPEN' && <small>Nhà tuyển dụng sẽ liên hệ bạn qua email hoặc số điện thoại trong hồ sơ</small>}
+              {canRate(a) && <button type="button" className="btn accent small" onClick={() => setRate(a)}>Đánh giá nhà tuyển dụng</button>}
+              {reviewed[a.id] && <span className="rated">Bạn đã đánh giá {reviewed[a.id]}/5</span>}
               {a.status !== 'PENDING' && a.updatedAt && <small>Cập nhật {dateText(a.updatedAt)}</small>}
             </div>
           </article>
         ))}
       </div>
+
+      {rate && (
+        <ReviewDialog app={rate} who={rate.companyName} onClose={() => setRate(null)}
+          onDone={(r) => {
+            setReviewed((m) => ({ ...m, [r.applicationId]: r.rating }));
+            setRate(null);
+            setToast({ text: 'Cảm ơn bạn đã đánh giá', type: 'success' });
+          }} />
+      )}
+      <Toast {...toast} onClose={closeToast} />
     </div>
   );
 }

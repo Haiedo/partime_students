@@ -6,7 +6,6 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import StudentProfilePage from './pages/StudentProfilePage';
 import EmployerProfilePage from './pages/EmployerProfilePage';
-import PlaceholderPage from './pages/PlaceholderPage';
 import HomePage from './pages/HomePage';
 import JobDetailPage from './pages/JobDetailPage';
 import MyApplicationsPage from './pages/MyApplicationsPage';
@@ -17,6 +16,7 @@ import RoleSelectPage from './pages/RoleSelectPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import SavedJobsPage from './pages/SavedJobsPage';
+import AdminPage from './pages/AdminPage';
 import './App.css';
 
 const SV = ['STUDENT'];
@@ -47,7 +47,7 @@ export default function App() {
             <Route path="/employer/jobs/:id/edit" element={<ProtectedRoute roles={NTD}><JobFormPage /></ProtectedRoute>} />
             <Route path="/employer/jobs/:id/applicants" element={<ProtectedRoute roles={NTD}><ApplicantsPage /></ProtectedRoute>} />
 
-            <Route path="/admin" element={<ProtectedRoute roles={AD}><PlaceholderPage title="Quản trị" sprint="Sprint 4" /></ProtectedRoute>} />
+            <Route path="/admin" element={<ProtectedRoute roles={AD}><AdminPage /></ProtectedRoute>} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>
