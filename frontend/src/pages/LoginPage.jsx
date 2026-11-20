@@ -4,7 +4,7 @@ import { homeOf, useAuth } from '../auth/AuthContext';
 import { errorMessage } from '../api/client';
 import { AuthAside, PasswordInput } from '../components/ui';
 import { SocialLogin } from '../components/SocialLogin';
-import loginArt from '../assets/dang-nhap.svg';
+import loginArt from '../assets/dang-nhap.jpg';
 
 // MH-01 – Đăng nhập (B6-08); thêm Tiếp tục với Google (PB-17) và Quên mật khẩu (PB-19)
 export default function LoginPage() {

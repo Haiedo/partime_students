@@ -5,8 +5,8 @@ import { useAuth } from '../auth/AuthContext';
 import { CATEGORIES, daysAgo, salaryText } from '../utils/format';
 import { AreaFilter } from '../components/AreaSelect';
 import imgWeekend from '../assets/banner-cuoi-tuan.jpg';
-import imgTet from '../assets/banner-tet.svg';
-import imgEmployer from '../assets/banner-nha-tuyen-dung.svg';
+import imgTet from '../assets/banner-tet.jpg';
+import imgEmployer from '../assets/banner-nha-tuyen-dung.jpg';
 
 // MH-02 – Trang chủ: banner quảng cáo + tìm kiếm + danh sách việc làm (PB-07, PB-08) + nút Lưu tin (PB-20)
 // Danh sách gọi GET /api/jobs: lọc theo từ khóa, ngành, địa điểm, mức lương; sắp xếp; phân trang.
@@ -42,7 +42,7 @@ const SLIDES = [
     tag: 'Tuyển gấp mùa Tết',
     title: 'Cuối năm cửa hàng cần người – hơn 500 vị trí đang chờ bạn',
     text: 'Bán hàng, đóng gói, giao hàng nội thành. Ca linh hoạt, xếp theo lịch học.',
-    cta: 'Xem việc bán hàng', category: 'Bán hàng', theme: 'yellow', image: imgTet,
+    cta: 'Xem việc bán hàng', category: 'Bán hàng', theme: 'violet', image: imgTet,
   },
   {
     tag: 'Dành cho nhà tuyển dụng',

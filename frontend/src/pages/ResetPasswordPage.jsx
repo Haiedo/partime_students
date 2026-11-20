@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import client, { errorMessage, fieldErrors } from '../api/client';
 import { AuthAside, PasswordInput } from '../components/ui';
 import { STRENGTH_TEXT, strength } from '../utils/password';
-import loginArt from '../assets/dang-nhap.svg';
+import loginArt from '../assets/dang-nhap.jpg';
 
 // MH-14 – Quên mật khẩu, bước 2: mở từ đường dẫn trong email (/reset-password?token=...) (PB-19)
 export default function ResetPasswordPage() {

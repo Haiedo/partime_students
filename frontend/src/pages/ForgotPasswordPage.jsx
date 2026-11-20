@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import client, { errorMessage } from '../api/client';
 import { AuthAside } from '../components/ui';
 import { EMAIL_RE } from '../utils/password';
-import loginArt from '../assets/dang-nhap.svg';
+import loginArt from '../assets/dang-nhap.jpg';
 
 // MH-14 – Quên mật khẩu, bước 1: nhập email để nhận đường dẫn đặt lại (PB-19)
 // Email có đăng ký hay không, màn hình đều hiện cùng một câu để không lộ email đã có tài khoản.
