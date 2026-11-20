@@ -4,7 +4,7 @@ import client, { errorMessage, fieldErrors } from '../api/client';
 import { homeOf, useAuth } from '../auth/AuthContext';
 import { AuthAside } from '../components/ui';
 import { EMAIL_RE } from '../utils/password';
-import loginArt from '../assets/dang-nhap.svg';
+import loginArt from '../assets/dang-nhap.jpg';
 
 const ROLES = [
   ['STUDENT', 'Sinh viên', 'Tìm việc part-time, ứng tuyển, theo dõi đơn'],
