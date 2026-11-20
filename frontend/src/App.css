@@ -202,7 +202,7 @@ select { font: inherit; padding: 10px 12px; border: 1px solid #D1D5DB; border-ra
 .hero::before { width: 420px; height: 420px; right: -120px; top: -160px; background: rgba(255,255,255,.08); }
 .hero::after { width: 220px; height: 220px; right: 210px; bottom: -150px; border: 34px solid rgba(255,255,255,.07); }
 .hero-yellow::before { background: rgba(91,43,176,.08); } .hero-yellow::after { border-color: rgba(91,43,176,.08); }
-.hero-text { position: relative; z-index: 1; animation: heroIn .55s ease both; }
+.hero-text { position: relative; z-index: 1; animation: heroIn .55s ease both; background-color: rgba(105, 105, 105, 0.5); padding: 14px 18px; border-radius: 10px; }
 @keyframes heroIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 .hero-tag { display: inline-block; font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: .08em; padding: 5px 10px; border-radius: 4px; background: #FFD43B; color: #3B1E6E; }
 .hero-yellow .hero-tag { background: #3B1E6E; color: #FFD43B; }

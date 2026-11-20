@@ -4,7 +4,7 @@ import client, { errorMessage } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { CATEGORIES, daysAgo, salaryText } from '../utils/format';
 import { AreaFilter } from '../components/AreaSelect';
-import imgWeekend from '../assets/banner-cuoi-tuan.svg';
+import imgWeekend from '../assets/banner-cuoi-tuan.jpg';
 import imgTet from '../assets/banner-tet.svg';
 import imgEmployer from '../assets/banner-nha-tuyen-dung.svg';
 
