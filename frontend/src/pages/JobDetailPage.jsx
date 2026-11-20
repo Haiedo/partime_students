@@ -6,7 +6,7 @@ import { initials } from '../components/Layout';
 import { Modal, StatusBadge, Toast } from '../components/ui';
 import { APP_STATUS, JOB_STATUS, dateText, daysAgo, salaryText } from '../utils/format';
 
-// MH-03 – Chi tiết tin + hộp thoại ứng tuyển (PB-08, PB-09)
+// MH-03 – Chi tiết tin + hộp thoại ứng tuyển (PB-08, PB-09) + nút Lưu tin (PB-20)
 export default function JobDetailPage() {
   const { id } = useParams();
   const { user } = useAuth();
@@ -18,6 +18,8 @@ export default function JobDetailPage() {
   const [open, setOpen] = useState(false);
   const [letter, setLetter] = useState('');
   const [sending, setSending] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState({ text: '' });
   const closeToast = useCallback(() => setToast({ text: '' }), []);
   const isStudent = user?.role === 'STUDENT';
@@ -37,7 +39,25 @@ export default function JobDetailPage() {
     client.get('/api/students/me')
       .then((res) => setCvUrl(res.data.cvUrl || null))
       .catch(() => setCvUrl(null));
+    client.get('/api/students/me/saved-jobs', { params: { size: 100 } })
+      .then((res) => setSaved(res.data.content.some((x) => String(x.jobId) === String(id))))
+      .catch(() => {});
   }, [isStudent, id]);
+
+  // Lưu / bỏ lưu tin (PUT gọi lại nhiều lần không lỗi)
+  const toggleSave = async () => {
+    setSaving(true);
+    try {
+      if (saved) await client.delete(`/api/students/me/saved-jobs/${id}`);
+      else await client.put(`/api/students/me/saved-jobs/${id}`);
+      setSaved(!saved);
+      setToast({ text: saved ? 'Đã bỏ lưu tin' : 'Đã lưu tin. Xem lại ở mục Việc đã lưu', type: 'success' });
+    } catch (err) {
+      setToast({ text: errorMessage(err), type: 'error' });
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const apply = async () => {
     setSending(true);
@@ -101,7 +121,14 @@ export default function JobDetailPage() {
             <span className="when">{daysAgo(job.createdAt)}</span>
           </div>
         </div>
-        <div className="detail-action">{action}</div>
+        <div className="detail-action">
+          {action}
+          {isStudent && (
+            <button type="button" className={`btn full save-btn ${saved ? 'on' : ''}`} disabled={saving} onClick={toggleSave}>
+              {saving ? 'Đang lưu...' : (saved ? 'Đã lưu – bỏ lưu' : 'Lưu tin')}
+            </button>
+          )}
+        </div>
       </section>
 
       <div className="detail-grid">

@@ -34,8 +34,9 @@ client.interceptors.request.use((config) => {
 client.interceptors.response.use(
   (res) => res,
   (error) => {
-    const isLoginCall = error.config?.url?.includes('/api/auth/login');
-    if (error.response?.status === 401 && !isLoginCall) {
+    // Các API đăng nhập (mật khẩu, Google, Facebook, đặt lại mật khẩu) tự hiện lỗi, không chuyển trang
+    const isAuthCall = error.config?.url?.includes('/api/auth/') && !error.config.url.includes('/api/auth/me');
+    if (error.response?.status === 401 && !isAuthCall) {
       storage.clear();
       if (window.location.pathname !== '/login') window.location.href = '/login';
     }

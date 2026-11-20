@@ -16,12 +16,17 @@ export function AuthProvider({ children }) {
       .finally(() => setChecking(false));
   }, []);
 
-  const login = async (email, password) => {
-    const res = await client.post('/api/auth/login', { email, password });
-    const { token, ...info } = res.data;
+  // Lưu phiên từ kết quả đăng nhập { token, id, email, role, fullName } (mật khẩu, Google, Facebook)
+  const signIn = (data) => {
+    const { token, ...info } = data;
     storage.save(token, info);
     setUser(info);
     return info;
+  };
+
+  const login = async (email, password) => {
+    const res = await client.post('/api/auth/login', { email, password });
+    return signIn(res.data);
   };
 
   const logout = () => {
@@ -30,7 +35,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, checking, login, logout }}>
+    <AuthContext.Provider value={{ user, checking, login, signIn, logout }}>
       {children}
     </AuthContext.Provider>
   );

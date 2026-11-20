@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import client, { errorMessage, fieldErrors } from '../api/client';
 import { AuthAside, PasswordInput } from '../components/ui';
+import { SocialLogin } from '../components/SocialLogin';
+import { EMAIL_RE, STRENGTH_TEXT, strength } from '../utils/password';
 import loginArt from '../assets/dang-nhap.svg';
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const ROLES = [
   ['STUDENT', 'Sinh viên', 'Tìm việc part-time'],
@@ -23,16 +23,6 @@ const BENEFITS = {
     items: ['Đăng, sửa, đóng tin chỉ với vài thao tác', 'Xem CV và lời giới thiệu của từng ứng viên', 'Đánh giá ứng viên sau khi công việc hoàn thành'],
   },
 };
-
-// Độ mạnh mật khẩu: 0–3
-function strength(pw) {
-  let s = 0;
-  if (pw.length >= 8) s += 1;
-  if (/[0-9]/.test(pw) && /[a-zA-Z]/.test(pw)) s += 1;
-  if (pw.length >= 12 || /[^a-zA-Z0-9]/.test(pw)) s += 1;
-  return s;
-}
-const STRENGTH_TEXT = ['Quá ngắn', 'Tạm được', 'Khá', 'Mạnh'];
 
 // MH-01 – Đăng ký (B6-08): kiểm tra ở trình duyệt trước, rồi hiển thị lỗi từ API
 export default function RegisterPage() {
@@ -86,6 +76,7 @@ export default function RegisterPage() {
       <div className="auth-box">
         <h1>Tạo tài khoản</h1>
         <p className="lead">Chọn vai trò của bạn để bắt đầu.</p>
+        <SocialLogin onError={setMessage} />
         <form onSubmit={onSubmit} noValidate>
           <div className="role-switch">
             {ROLES.map(([value, label, sub]) => (
