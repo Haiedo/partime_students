@@ -76,7 +76,6 @@ export default function RegisterPage() {
       <div className="auth-box">
         <h1>Tạo tài khoản</h1>
         <p className="lead">Chọn vai trò của bạn để bắt đầu.</p>
-        <SocialLogin onError={setMessage} />
         <form onSubmit={onSubmit} noValidate>
           <div className="role-switch">
             {ROLES.map(([value, label, sub]) => (
@@ -103,6 +102,7 @@ export default function RegisterPage() {
           {message && <p className="alert error">{message}</p>}
           <button className="btn primary full big" disabled={loading}>{loading ? 'Đang gửi...' : 'Đăng ký'}</button>
         </form>
+        <SocialLogin onError={setMessage} />
         <p className="switch">Đã có tài khoản? <Link to="/login">Đăng nhập</Link></p>
       </div>
     </div>

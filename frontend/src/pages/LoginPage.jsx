@@ -46,7 +46,6 @@ export default function LoginPage() {
         <p className="lead">Đăng nhập để tiếp tục tìm việc hoặc quản lý tin tuyển dụng.</p>
         {location.state?.registered && <p className="alert success">Đăng ký thành công, mời bạn đăng nhập</p>}
         {location.state?.reset && <p className="alert success">Đã đổi mật khẩu, mời bạn đăng nhập bằng mật khẩu mới</p>}
-        <SocialLogin onError={setError} from={location.state?.from} />
         <form onSubmit={onSubmit} noValidate>
           <label>Email
             <input name="email" type="email" value={form.email} onChange={onChange} placeholder="vd: sv1@gr7.vn" />
@@ -58,6 +57,7 @@ export default function LoginPage() {
           {error && <p className="alert error">{error}</p>}
           <button className="btn primary full big" disabled={loading}>{loading ? 'Đang đăng nhập...' : 'Đăng nhập'}</button>
         </form>
+        <SocialLogin onError={setError} from={location.state?.from} />
         <p className="switch">Chưa có tài khoản? <Link to="/register">Đăng ký miễn phí</Link></p>
       </div>
     </div>
