@@ -1,0 +1,8 @@
+# Copy file này thành application.properties (cùng thư mục) rồi điền thông tin Gmail gửi thư.
+# File application.properties đã bị .gitignore chặn, không bị commit.
+# Bỏ trống thì email chỉ in ra terminal, web vẫn chạy bình thường.
+#spring.mail.host=smtp.gmail.com
+#spring.mail.port=587
+#spring.mail.username=gmail_gui@gmail.com
+#spring.mail.password=mat_khau_ung_dung_16_ky_tu
+#app.mail.from=PartTimeSV <gmail_gui@gmail.com>
