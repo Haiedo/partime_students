@@ -3,6 +3,7 @@ package com.gr7.backend.repository;
 import com.gr7.backend.entity.JobPost;
 import com.gr7.backend.entity.JobStatus;
 import com.gr7.backend.entity.SalaryUnit;
+import com.gr7.backend.entity.WorkTimeSlots;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
@@ -22,7 +23,7 @@ public final class JobSpecifications {
 
     public static Specification<JobPost> search(String keyword, String category, String location,
                                                 BigDecimal minSalary, BigDecimal maxSalary, SalaryUnit unit,
-                                                Integer timeMask) {
+                                                WorkTimeSlots.TimeFilter timeFilter) {
         return (root, query, cb) -> {
             List<Predicate> ps = new ArrayList<>();
             ps.add(cb.equal(root.get("status"), JobStatus.OPEN));
@@ -56,10 +57,27 @@ public final class JobSpecifications {
             }
             // Thời gian rảnh: tin có ít nhất một buổi trùng với các ngày/buổi sinh viên chọn
             // bitand là hàm có sẵn của Hibernate, với MySQL được dịch thành (shift_slots & mask)
-            if (timeMask != null) {
-                Expression<Integer> overlap = cb.function("bitand", Integer.class,
-                        root.<Integer>get("shiftSlots"), cb.literal(timeMask));
-                ps.add(cb.notEqual(overlap, 0));
+            if (timeFilter != null) {
+                Expression<Integer> slots = root.<Integer>get("shiftSlots");
+
+                // 1. Có ngày/buổi trùng với khung lọc
+                Expression<Integer> match = cb.function("bitand", Integer.class,
+                        slots, cb.literal(timeFilter.matchMask()));
+                ps.add(cb.notEqual(match, 0));
+
+                // 2. Không có phần giờ nào lấn ra ngoài buổi đã lọc
+                if (timeFilter.forbiddenMask() != 0) {
+                    Expression<Integer> outside = cb.function("bitand", Integer.class,
+                            slots, cb.literal(timeFilter.forbiddenMask()));
+                    ps.add(cb.equal(outside, 0));
+                }
+
+                // 3. Nếu lọc "Cả ngày" -> bắt buộc có bit FULL_DAY_BIT
+                if (timeFilter.requireFullDay()) {
+                    Expression<Integer> fullDay = cb.function("bitand", Integer.class,
+                            slots, cb.literal(WorkTimeSlots.FULL_DAY_BIT));
+                    ps.add(cb.notEqual(fullDay, 0));
+                }
             }
             return cb.and(ps.toArray(new Predicate[0]));
         };

@@ -1,6 +1,7 @@
 package com.gr7.backend.config;
 
 import com.gr7.backend.entity.JobPost;
+import com.gr7.backend.entity.WorkTimeSlots;
 import com.gr7.backend.repository.JobPostRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,10 +31,12 @@ public class ShiftSlotsBackfill implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) {
-        List<JobPost> missing = jobs.findByShiftSlots(0);
-        if (missing.isEmpty()) return;
-        missing.forEach(j -> j.setWorkTime(j.getWorkTime()));   // setWorkTime tự tính lại shiftSlots
-        jobs.saveAll(missing);
-        log.info("Đã quy đổi ca làm cho {} tin cũ", missing.size());
+        List<JobPost> outdated = jobs.findAll().stream()
+                .filter(j -> j.getShiftSlots() != WorkTimeSlots.fromText(j.getWorkTime()))
+                .toList();
+        if (outdated.isEmpty()) return;
+        outdated.forEach(j -> j.setWorkTime(j.getWorkTime()));
+        jobs.saveAll(outdated);
+        log.info("Đã cập nhật ca làm cho {} tin cũ", outdated.size());
     }
 }
