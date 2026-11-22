@@ -20,13 +20,15 @@ Nhóm **GR7** · GVHD: ThS. Nguyễn Văn Trung
 backend/    Spring Boot (REST API)        – chạy ở http://localhost:8080
 frontend/   React + Vite (giao diện)      – chạy ở http://localhost:5173
 backend/docs/create_db.sql            tạo database parttime_db + user gr7
-backend/docs/parttime_db_schema.sql   tạo 7 bảng theo ERD
+backend/docs/parttime_db_schema.sql   tạo 11 bảng theo ERD (máy cài mới, xóa dữ liệu cũ)
+backend/docs/nang_cap_database.sql    nâng cấp database đang có lên cấu trúc mới, giữ dữ liệu
 docs/postman/                          Postman collection + environment
 ```
 
 ## Cách chạy trên máy
 1. **Database** – mở MySQL Workbench bằng tài khoản root, chạy lần lượt
    `backend/docs/create_db.sql` rồi `backend/docs/parttime_db_schema.sql`.
+   Máy đã có database từ trước: chỉ chạy `backend/docs/nang_cap_database.sql` (giữ dữ liệu, chạy lại nhiều lần được).
 2. **Backend** – trong thư mục `backend`:
    ```bash
    ./mvnw spring-boot:run
@@ -70,8 +72,7 @@ docs/postman/                          Postman collection + environment
 | GET | /api/jobs/{id}/applications | Nhà tuyển dụng (chủ tin) |
 | PATCH | /api/applications/{id}/status (body `{"status":"ACCEPTED"}` hoặc `REJECTED`) | Nhà tuyển dụng (chủ tin) |
 
-Script bổ sung ở Sprint 3 (chạy trong MySQL Workbench):
-- `backend/docs/sql/index_job_posts.sql` – thêm index cho tìm kiếm (chạy 1 lần)
+Script bổ sung (chạy trong MySQL Workbench):
 - `docs/sql/seed_1000_jobs.sql` – sinh 1.000 tin giả để đo tốc độ tìm kiếm (NFR-01 < 2 giây)
 
 Gửi kèm header `Authorization: Bearer <token>` với mọi API trừ đăng ký, đăng nhập.

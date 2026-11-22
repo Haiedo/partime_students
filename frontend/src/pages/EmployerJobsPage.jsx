@@ -9,6 +9,7 @@ import { APP_STATUS, JOB_STATUS, dateText, salaryText } from '../utils/format';
 const JOB_TABS = [
   ['OPEN', 'Đang tuyển'],
   ['PENDING', 'Chờ duyệt'],
+  ['REJECTED', 'Từ chối duyệt'],
   ['CLOSED', 'Ngừng tuyển'],
   ['ALL', 'Tất cả'],
 ];
@@ -30,7 +31,8 @@ const matchJobTab = (j, k) => {
   if (k === 'ALL') return true;
   if (k === 'OPEN') return j.status === 'OPEN';
   if (k === 'PENDING') return j.status === 'PENDING';
-  return j.status !== 'OPEN' && j.status !== 'PENDING';
+  if (k === 'REJECTED') return j.status === 'REJECTED';
+  return j.status !== 'OPEN' && j.status !== 'PENDING' && j.status !== 'REJECTED';
 };
 
 // MH-07 – Quản lý tin của tôi & tổng hợp đơn ứng tuyển ngay trên cùng 1 trang
@@ -203,7 +205,9 @@ export default function EmployerJobsPage() {
           {jobs && shownJobs.length === 0 && (
             <div className="card muted-box">
               <b>{jobs.length === 0 ? 'Bạn chưa đăng tin nào' : 'Không có tin ở mục này'}</b>
-              <p>{tab === 'PENDING' ? 'Các tin mới đăng sẽ hiện ở đây trong lúc chờ quản trị viên duyệt.' : 'Bấm Đăng tin mới để bắt đầu nhận hồ sơ sinh viên.'}</p>
+              <p>{tab === 'PENDING' ? 'Các tin mới đăng sẽ hiện ở đây trong lúc chờ quản trị viên duyệt.'
+                : tab === 'REJECTED' ? 'Tin bị quản trị viên từ chối sẽ hiện ở đây kèm lý do; sửa tin để gửi duyệt lại.'
+                : 'Bấm Đăng tin mới để bắt đầu nhận hồ sơ sinh viên.'}</p>
             </div>
           )}
 
