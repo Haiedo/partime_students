@@ -42,12 +42,13 @@ public class JobSearchService {
         if (minSalary != null && maxSalary != null && minSalary.compareTo(maxSalary) > 0) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Mức lương từ không được lớn hơn mức lương đến");
         }
-        Integer timeMask = null;
+        WorkTimeSlots.TimeFilter timeFilter = null;
         if (hasText(days) || hasText(shifts)) {
             if (!allValid(days, true) || !allValid(shifts, false)) {
-                throw new ApiException(HttpStatus.BAD_REQUEST, "Ngày phải là T2…T7, CN; buổi phải là SANG, CHIEU, TOI");
+                throw new ApiException(HttpStatus.BAD_REQUEST,
+                        "Ngày phải là T2…T7, CN; buổi phải là SANG, CHIEU, TOI hoặc CA_NGAY");
             }
-            timeMask = WorkTimeSlots.filterMask(days, shifts);
+            timeFilter = WorkTimeSlots.buildFilter(days, shifts);
         }
         int safeSize = Math.min(Math.max(size, 1), MAX_PAGE_SIZE);
         Sort order = "salary".equals(sort)
@@ -55,7 +56,7 @@ public class JobSearchService {
                 : Sort.by(Sort.Order.desc("createdAt"), Sort.Order.desc("id"));
 
         var result = jobs.findAll(
-                JobSpecifications.search(keyword, category, location, minSalary, maxSalary, unit, timeMask),
+                JobSpecifications.search(keyword, category, location, minSalary, maxSalary, unit, timeFilter),
                 PageRequest.of(page, safeSize, order));
         return PageResponse.of(result, JobSummary::from);
     }
