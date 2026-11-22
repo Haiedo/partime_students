@@ -1,13 +1,13 @@
 package com.gr7.backend.entity;
 
 /**
- * Trạng thái tin: OPEN (đang tuyển) → FILLED (đã đủ người) → COMPLETED (hoàn thành).
- * CLOSED là đóng tin giữa chừng, đi bằng API đóng tin riêng (PB-06).
+ * Trạng thái tin: PENDING (chờ duyệt) → OPEN (đang tuyển) → FILLED (đã đủ người) → COMPLETED (hoàn thành).
+ * REJECTED: quản trị viên từ chối duyệt (NTD có thể sửa để gửi duyệt lại).
+ * CLOSED: nhà tuyển dụng đóng tin giữa chừng.
  */
 public enum JobStatus {
-    OPEN, FILLED, COMPLETED, CLOSED;
+    PENDING, OPEN, FILLED, COMPLETED, CLOSED, REJECTED;
 
-    /** Chỉ cho đi tới đúng bước kế tiếp; nhảy cóc hoặc quay ngược đều sai (PB-12). */
     public boolean canMoveTo(JobStatus next) {
         return (this == OPEN && next == FILLED) || (this == FILLED && next == COMPLETED);
     }

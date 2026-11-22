@@ -26,6 +26,11 @@ public class ApplicantController {
         return service.listForJob(CurrentUser.id(jwt), jobId);
     }
 
+    @GetMapping("/api/employers/me/applications")
+    public List<ApplicantResponse> listMine(@AuthenticationPrincipal Jwt jwt) {
+        return service.listForEmployer(CurrentUser.id(jwt));
+    }
+
     @PatchMapping("/api/applications/{id}/status")
     public ApplicantResponse updateStatus(@AuthenticationPrincipal Jwt jwt, @PathVariable Long id,
                                           @Valid @RequestBody ApplicationStatusRequest req) {

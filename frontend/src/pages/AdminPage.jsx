@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import client, { errorMessage } from '../api/client';
-import { Confirm, StatusBadge, Toast } from '../components/ui';
+import { Confirm, Modal, StatusBadge, Toast } from '../components/ui';
 import { JOB_STATUS, dateText } from '../utils/format';
 
 // MH-12 – Trang Quản trị: quản lý người dùng (PB-15) và kiểm duyệt tin (PB-16).
@@ -12,7 +12,13 @@ const ROLE = { STUDENT: 'Sinh viên', EMPLOYER: 'Nhà tuyển dụng', ADMIN: 'Q
 const USER_STATUS = { ACTIVE: ['Đang hoạt động', 'open'], LOCKED: ['Đã khóa', 'rejected'] };
 
 export default function AdminPage() {
-  const [tab, setTab] = useState('users');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = searchParams.get('tab') === 'jobs' ? 'jobs' : 'users';
+
+  const pickTab = (k) => {
+    setSearchParams(k === 'jobs' ? { tab: 'jobs' } : {}, { replace: true });
+  };
+
   return (
     <div className="list-page admin">
       <div className="page-head">
@@ -24,7 +30,7 @@ export default function AdminPage() {
       <div className="tabs" role="tablist">
         {TABS.map(([k, label]) => (
           <button key={k} type="button" role="tab" aria-selected={tab === k} className={tab === k ? 'on' : ''}
-            onClick={() => setTab(k)}>{label}</button>
+            onClick={() => pickTab(k)}>{label}</button>
         ))}
       </div>
       {tab === 'users' && <UsersTab />}
@@ -96,7 +102,10 @@ function UsersTab() {
             <tbody>
               {list.map((u) => (
                 <tr key={u.id}>
-                  <td><b>{u.fullName}</b><small>{u.email}</small></td>
+                  <td>
+                    <Link to={`/admin/users/${u.id}`}><b>{u.fullName}</b></Link>
+                    <small>{u.email}</small>
+                  </td>
                   <td>{ROLE[u.role]}</td>
                   <td>{dateText(u.createdAt)}</td>
                   <td><StatusBadge map={USER_STATUS} value={u.status} /></td>
@@ -132,24 +141,80 @@ function UsersTab() {
   );
 }
 
-const JOB_FILTERS = [['', 'Tất cả'], ['false', 'Đang hiển thị'], ['true', 'Đã ẩn']];
+const JOB_FILTERS = [
+  ['PENDING', 'Chờ duyệt'],
+  ['', 'Tất cả'],
+  ['VISIBLE', 'Đang hiển thị'],
+  ['REJECTED', 'Đã từ chối'],
+  ['HIDDEN', 'Đã ẩn'],
+];
+
+const VISIBLE_STATUSES = [
+  ['', 'Trạng thái: Tất cả'],
+  ['OPEN', 'Đang tuyển'],
+  ['FILLED', 'Đã đủ người'],
+  ['COMPLETED', 'Đã hoàn thành'],
+  ['CLOSED', 'Đã đóng'],
+];
 
 function JobsTab() {
-  const [hidden, setHidden] = useState('');
+  const VALID_FILTERS = ['', 'PENDING', 'VISIBLE', 'REJECTED', 'HIDDEN'];
+  const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+  const urlFilter = searchParams.get('filter') || '';
+  const filter = VALID_FILTERS.includes(urlFilter) ? urlFilter : '';
+  const highlightId = Number(searchParams.get('jobId')) || null;
+
+  const [statusFilter, setStatusFilter] = useState('');
   const [q, setQ] = useState('');
-  const { list, setList, error } = useAdminList('/api/admin/jobs', { hidden: hidden || undefined, q: q || undefined });
-  const [ask, setAsk] = useState(null);
+
+  const pickFilter = (v) => {
+    const next = { tab: 'jobs' };
+    if (v) next.filter = v;
+    setSearchParams(next, { replace: true });
+    setStatusFilter('');
+  };
+
+  const params = {
+    q: q || undefined,
+    status: (filter === 'PENDING' || filter === 'REJECTED') ? filter : undefined,
+    hidden: filter === 'HIDDEN' ? 'true' : (filter === 'VISIBLE' ? 'false' : undefined),
+  };
+
+  const { list, error, reload } = useAdminList('/api/admin/jobs', params);
+  const [ask, setAsk] = useState(null); // { type: 'approve' | 'reject' | 'hide' | 'unhide', job }
+  const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState({ text: '' });
   const closeToast = useCallback(() => setToast({ text: '' }), []);
 
-  const toggle = async () => {
-    const hide = !ask.hidden;
+  const openAsk = (type, job) => {
+    setReason('');
+    setAsk({ type, job });
+  };
+
+  useEffect(() => {
+    if (location.state?.fromNotif) reload();
+  }, [location.state?.fromNotif, reload]);
+
+  const submitAction = async () => {
+    const { type, job } = ask;
     setBusy(true);
     try {
-      const res = await client.patch(`/api/admin/jobs/${ask.id}/${hide ? 'hide' : 'unhide'}`);
-      setList((l) => l.map((j) => (j.id === res.data.id ? res.data : j)).filter((j) => hidden === '' || String(j.hidden) === hidden));
-      setToast({ text: hide ? `Đã ẩn tin "${ask.title}"` : `Đã hiện lại tin "${ask.title}"`, type: 'success' });
+      if (type === 'approve') {
+        await client.patch(`/api/admin/jobs/${job.id}/approve`);
+        setToast({ text: `Đã duyệt tin "${job.title}"`, type: 'success' });
+      } else if (type === 'reject') {
+        await client.patch(`/api/admin/jobs/${job.id}/reject`, { reason: reason.trim() || null });
+        setToast({ text: `Đã từ chối tin "${job.title}"`, type: 'success' });
+      } else if (type === 'hide') {
+        await client.patch(`/api/admin/jobs/${job.id}/hide`);
+        setToast({ text: `Đã ẩn tin "${job.title}"`, type: 'success' });
+      } else {
+        await client.patch(`/api/admin/jobs/${job.id}/unhide`);
+        setToast({ text: `Đã hiện lại tin "${job.title}"`, type: 'success' });
+      }
+      reload();
     } catch (err) {
       setToast({ text: errorMessage(err), type: 'error' });
     } finally {
@@ -158,61 +223,166 @@ function JobsTab() {
     }
   };
 
+  const shown = (list || []).filter(
+    (j) => filter !== 'VISIBLE' || !statusFilter || j.status === statusFilter,
+  );
+  const keepTable = filter === 'VISIBLE' && statusFilter !== '';
+
   return (
     <>
       <div className="admin-filter">
-        <input type="search" placeholder="Tìm theo tiêu đề tin hoặc tên công ty" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Tìm tin" />
         <div className="tabs small-tabs">
           {JOB_FILTERS.map(([v, label]) => (
-            <button key={v} type="button" className={hidden === v ? 'on' : ''} onClick={() => setHidden(v)}>{label}</button>
+            <button
+              key={v}
+              type="button"
+              className={filter === v ? 'on' : ''}
+              onClick={() => { pickFilter(v);}}
+            >
+              {label}
+            </button>
           ))}
         </div>
-        {list && <span className="admin-count">{list.length} tin</span>}
+        {list && <span className="admin-count">{shown.length} tin</span>}
+        <input
+          type="search"
+          className="admin-search"
+          placeholder="Tìm tiêu đề, công ty..."
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          aria-label="Tìm tin"
+        />
       </div>
 
       {error && <div className="card muted-box"><b>{error}</b></div>}
       {!list && !error && <div className="card muted-box">Đang tải danh sách tin...</div>}
-      {list && list.length === 0 && <div className="card muted-box"><b>Không có tin nào khớp bộ lọc</b></div>}
+      {list && shown.length === 0 && !keepTable && (
+        <div className="card muted-box"><b>Không có tin nào khớp bộ lọc</b></div>
+      )}
 
-      {list && list.length > 0 && (
+      {list && (shown.length > 0 || keepTable) && (
         <div className="card admin-table">
           <table>
-            <thead><tr><th>Tin tuyển dụng</th><th>Khu vực</th><th>Ngày đăng</th><th>Trạng thái</th><th aria-label="Thao tác" /></tr></thead>
+            <thead>
+              <tr>
+                <th>Tin tuyển dụng</th>
+                <th>Khu vực</th>
+                <th>Ngày đăng</th>
+                <th>
+                  {filter === 'VISIBLE' ? (
+                    <select
+                      className={`th-select ${statusFilter ? 'on' : ''}`}
+                      value={statusFilter}
+                      onChange={(e) => setStatusFilter(e.target.value)}
+                      aria-label="Lọc trạng thái tin"
+                    >
+                      {VISIBLE_STATUSES.map(([v, label]) => (
+                        <option key={v} value={v}>{label}</option>
+                      ))}
+                    </select>
+                  ) : 'Trạng thái'}
+                </th>
+                <th aria-label="Thao tác" />
+              </tr>
+            </thead>
             <tbody>
-              {list.map((j) => (
-                <tr key={j.id} className={j.hidden ? 'dim' : ''}>
-                  <td>
-                    {j.hidden ? <b>{j.title}</b> : <Link to={`/jobs/${j.id}`} target="_blank"><b>{j.title}</b></Link>}
-                    <small>{j.companyName} · {j.category}</small>
-                  </td>
-                  <td>{j.location}</td>
-                  <td>{dateText(j.createdAt)}</td>
-                  <td>{j.hidden ? <span className="badge rejected">Đã ẩn</span> : <StatusBadge map={JOB_STATUS} value={j.status} />}</td>
-                  <td className="act">
-                    <button type="button" className={`btn small ${j.hidden ? 'primary' : 'ghost'}`} onClick={() => setAsk(j)}>
-                      {j.hidden ? 'Hiện lại' : 'Ẩn tin'}
+              {shown.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="empty-row">
+                    Không có tin nào ở trạng thái này.{' '}
+                    <button type="button" className="link-btn" onClick={() => setStatusFilter('')}>
+                      Xem tất cả
                     </button>
                   </td>
                 </tr>
-              ))}
+              ) : (
+                shown.map((j) => (
+                  <tr key={j.id} className={`${j.hidden ? 'dim' : ''} ${highlightId === j.id ? 'hl' : ''}`.trim()}>
+                    <td>
+                      <Link to={`/admin/jobs/${j.id}`}><b>{j.title}</b></Link>
+                      <small>{j.companyName} · {j.category}</small>
+                      {j.status === 'REJECTED' && j.rejectReason && (
+                        <small className="reject-reason">Lý do từ chối: {j.rejectReason}</small>
+                      )}
+                    </td>
+                    <td>{j.location}</td>
+                    <td>{dateText(j.createdAt)}</td>
+                    <td>{j.hidden ? <span className="badge rejected">Đã ẩn</span> : <StatusBadge map={JOB_STATUS} value={j.status} />}</td>
+                    <td className="act">
+                      <div className="row-btns" style={{ justifyContent: 'flex-end' }}>
+                        {j.status === 'PENDING' && (
+                          <>
+                            <button type="button" className="btn primary small" onClick={() => openAsk('approve', j)}>Duyệt</button>
+                            <button type="button" className="btn ghost small" onClick={() => openAsk('reject', j)}>Từ chối</button>
+                          </>
+                        )}
+                        {j.status === 'REJECTED' && (
+                          <button type="button" className="btn primary small" onClick={() => openAsk('approve', j)}>Duyệt lại</button>
+                        )}
+                        {j.status !== 'PENDING' && j.status !== 'REJECTED' && (
+                          <button
+                            type="button"
+                            className={`btn small ${j.hidden ? 'primary' : 'ghost'}`}
+                            onClick={() => openAsk(j.hidden ? 'unhide' : 'hide', j)}
+                          >
+                            {j.hidden ? 'Hiện lại' : 'Ẩn tin'}
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
       )}
 
-      {ask && (
+      {ask?.type === 'approve' && (
         <Confirm
-          title={ask.hidden ? 'Hiện lại tin?' : 'Ẩn tin vi phạm?'}
-          text={ask.hidden
-            ? `Tin "${ask.title}" sẽ hiện lại trong kết quả tìm kiếm.`
-            : `Tin "${ask.title}" của ${ask.companyName} sẽ biến mất khỏi tìm kiếm và trang chi tiết, sinh viên không ứng tuyển được. Nhà tuyển dụng sẽ nhận thông báo. Tin không bị xóa.`}
-          okText={ask.hidden ? 'Hiện lại' : 'Ẩn tin'}
-          danger={!ask.hidden}
+          title="Duyệt tin tuyển dụng?"
+          text={`Tin "${ask.job.title}" của ${ask.job.companyName} sẽ được hiển thị công khai trên trang chủ và gửi thông báo tới các sinh viên phù hợp.`}
+          okText="Duyệt tin"
           busy={busy}
-          onOk={toggle}
+          onOk={submitAction}
           onClose={() => setAsk(null)}
         />
       )}
+
+      {ask?.type === 'reject' && (
+        <Modal title="Từ chối duyệt tin" onClose={() => setAsk(null)} footer={(
+          <>
+            <button type="button" className="btn link" onClick={() => setAsk(null)}>Hủy</button>
+            <button type="button" className="btn danger" disabled={busy} onClick={submitAction}>
+              {busy ? 'Đang xử lý...' : 'Từ chối tin'}
+            </button>
+          </>
+        )}>
+          <p className="modal-text">
+            Tin <b>{ask.job.title}</b> sẽ không hiển thị công khai. Nhà tuyển dụng sẽ nhận thông báo và có thể sửa lại để gửi duyệt.
+          </p>
+          <label>Lý do từ chối <small>(không bắt buộc, tối đa 500 ký tự)</small>
+            <textarea rows={3} maxLength={500} value={reason} onChange={(e) => setReason(e.target.value)}
+              placeholder="Ví dụ: Mức lương không rõ ràng, nội dung thiếu thông tin ca làm..." />
+            <small className="count">{reason.length}/500</small>
+          </label>
+        </Modal>
+      )}
+
+      {(ask?.type === 'hide' || ask?.type === 'unhide') && (
+        <Confirm
+          title={ask.type === 'unhide' ? 'Hiện lại tin?' : 'Ẩn tin vi phạm?'}
+          text={ask.type === 'unhide'
+            ? `Tin "${ask.job.title}" sẽ hiện lại trong kết quả tìm kiếm.`
+            : `Tin "${ask.job.title}" của ${ask.job.companyName} sẽ biến mất khỏi tìm kiếm và trang chi tiết, sinh viên không ứng tuyển được. Nhà tuyển dụng sẽ nhận thông báo. Tin không bị xóa.`}
+          okText={ask.type === 'unhide' ? 'Hiện lại' : 'Ẩn tin'}
+          danger={ask.type === 'hide'}
+          busy={busy}
+          onOk={submitAction}
+          onClose={() => setAsk(null)}
+        />
+      )}
+
       <Toast {...toast} onClose={closeToast} />
     </>
   );

@@ -30,6 +30,11 @@ public class StudentProfile {
     @Column(name = "cv_url", length = 255)
     private String cvUrl;
 
+    @Column(name = "available_slots", nullable = false)
+    private int availableSlots = 0;
+
+    public int getAvailableSlots() { return availableSlots; }
+    public void setAvailableSlots(int availableSlots) { this.availableSlots = availableSlots; }
     public Long getId() { return id; }
     public User getUser() { return user; }
     public void setUser(User user) { this.user = user; }

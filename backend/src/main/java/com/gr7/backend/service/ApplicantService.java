@@ -62,6 +62,13 @@ public class ApplicantService {
         return ApplicantResponse.from(applications.saveAndFlush(a));
     }
 
+    @Transactional(readOnly = true)
+    public List<ApplicantResponse> listForEmployer(Long userId) {
+        return applications.findByJobEmployerUserIdOrderByAppliedAtDesc(userId).stream()
+                .map(ApplicantResponse::from)
+                .toList();
+    }
+
     private static void checkOwner(JobPost j, Long userId) {
         if (!j.getEmployer().getUser().getId().equals(userId)) {
             throw new ApiException(HttpStatus.FORBIDDEN, "Bạn chỉ xem và duyệt được ứng viên của tin do mình đăng");

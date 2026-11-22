@@ -5,6 +5,7 @@ import com.gr7.backend.dto.JobResponse;
 import com.gr7.backend.dto.JobSummary;
 import com.gr7.backend.dto.PageResponse;
 import com.gr7.backend.entity.SalaryUnit;
+import com.gr7.backend.security.CurrentUser;
 import com.gr7.backend.service.JobSearchService;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -50,7 +51,9 @@ public class JobSearchController {
 
     @GetMapping("/{id}")
     public JobResponse detail(@AuthenticationPrincipal Jwt jwt, @PathVariable Long id) {
-        JobResponse job = service.detail(id);
+        Long userId = jwt == null ? null : CurrentUser.id(jwt);
+        String role = jwt == null ? null : jwt.getClaimAsString("role");
+        JobResponse job = service.detail(id, userId, role);
         return jwt == null ? job.withoutContact() : job;
     }
 }
