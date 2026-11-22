@@ -35,7 +35,10 @@ export default function NotificationBell() {
       try { await client.patch(`/api/notifications/${n.id}/read`); } catch { /* vẫn chuyển trang */ }
       load();
     }
-    if (n.link) navigate(n.link);
+    const target = (n.type === 'JOB_PENDING_APPROVAL' && n.link === '/admin')
+      ? '/admin?tab=jobs&filter=PENDING'
+      : n.link;
+    if (target) navigate(target, { state: { fromNotif: Date.now() } });
   };
 
   const readAll = async () => {

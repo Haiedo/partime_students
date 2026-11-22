@@ -350,12 +350,14 @@ export default function HomePage() {
         </div>
 
         <aside className="side-col">
-          <div className="card">
-            <h3 className="side-title">Hoàn thiện hồ sơ để nhà tuyển dụng chú ý đến bạn</h3>
-            <p className="side-text">Thêm kỹ năng và CV để ứng tuyển nhanh hơn, nhận thông báo khi đơn được duyệt.</p>
-            <Link to={user ? '/student/profile' : '/login'} className="btn primary full">Cập nhật hồ sơ</Link>
-            <Link to={user ? '/student/applications' : '/login'} className="btn ghost full mt8">Xem đơn của tôi</Link>
-          </div>
+          {(!user || user.role === 'STUDENT') && (
+            <div className="card">
+              <h3 className="side-title">Hoàn thiện hồ sơ để nhà tuyển dụng chú ý đến bạn</h3>
+              <p className="side-text">Thêm kỹ năng và CV để ứng tuyển nhanh hơn, nhận thông báo khi đơn được duyệt.</p>
+              <Link to={user ? '/student/profile' : '/login'} className="btn primary full">Cập nhật hồ sơ</Link>
+              <Link to={user ? '/student/applications' : '/login'} className="btn ghost full mt8">Xem đơn của tôi</Link>
+            </div>
+          )}
 
           <div className="card dark-card">
             <span>Đánh giá hai chiều</span>

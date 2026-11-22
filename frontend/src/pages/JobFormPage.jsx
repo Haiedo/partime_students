@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import client, { errorMessage, fieldErrors } from '../api/client';
 import { Toast } from '../components/ui';
 import { CATEGORIES, UNIT, salaryText } from '../utils/format';
-import { DAYS, DAY_NAMES, DAY_PRESETS, SHIFT_PRESETS, TIMES, checkWorkTime, composeWorkTime, parseWorkTime, presetOf } from '../utils/workTime';
+import { DAYS, DAY_NAMES, DAY_PRESETS, TIMES, checkWorkTime, composeWorkTime, parseWorkTime, presetOf } from '../utils/workTime';
 import { AreaSelect } from '../components/AreaSelect';
 
 const EMPTY = {
@@ -56,11 +56,6 @@ export default function JobFormPage() {
     setCustomDays(false);
     changeWt({ ...wt, days: DAY_PRESETS.find(([k]) => k === v)?.[2] || [] });
   };
-  const pickShift = (i) => {
-    if (i === '') return;
-    const [, start, end] = SHIFT_PRESETS[Number(i)];
-    changeWt({ ...wt, start, end });
-  };
   const timeOpts = (extra) => (extra && !TIMES.includes(extra) ? [extra, ...TIMES] : TIMES);
   const workTime = composeWorkTime(wt);
 
@@ -85,9 +80,19 @@ export default function JobFormPage() {
       slots: form.slots === '' ? null : Number(form.slots),
     };
     try {
-      if (editing) await client.put(`/api/jobs/${id}`, body);
-      else await client.post('/api/jobs', body);
-      navigate('/employer/jobs');
+      if (editing) {
+        const res = await client.put(`/api/jobs/${id}`, body);
+        navigate('/employer/jobs', {
+          state: res.data.status === 'PENDING'
+            ? { tab: 'PENDING', notice: 'Đã cập nhật tin, đang chờ quản trị viên duyệt' }
+            : { tab: 'OPEN', notice: 'Đã lưu thay đổi tin tuyển dụng' },
+        });
+      } else {
+        await client.post('/api/jobs', body);
+        navigate('/employer/jobs', {
+          state: { tab: 'PENDING', notice: 'Đã đăng tin thành công, đang chờ quản trị viên duyệt' },
+        });
+      }
     } catch (err) {
       setErrors(fieldErrors(err));
       setToast({ text: errorMessage(err), type: 'error' });
@@ -135,17 +140,11 @@ export default function JobFormPage() {
           <fieldset className={`form-sec ${errors.workTime ? 'has-error' : ''}`}>
             <legend>Thời gian làm việc *</legend>
             <div className="wt-grid">
-              <label>Ngày làm
+              <label className="wide">Ngày làm
                 <select value={dayPreset} onChange={(e) => pickDays(e.target.value)}>
                   <option value="">Chọn ngày làm</option>
                   {DAY_PRESETS.map(([k, label]) => <option key={k} value={k}>{label}</option>)}
                   <option value="custom">Tự chọn từng ngày</option>
-                </select>
-              </label>
-              <label>Ca mẫu (chọn nhanh)
-                <select value="" onChange={(e) => pickShift(e.target.value)}>
-                  <option value="">Chọn ca có sẵn</option>
-                  {SHIFT_PRESETS.map(([label], i) => <option key={label} value={i}>{label}</option>)}
                 </select>
               </label>
               <label>Giờ bắt đầu

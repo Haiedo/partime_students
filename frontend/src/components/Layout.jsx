@@ -2,6 +2,7 @@ import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-do
 import { useAuth } from '../auth/AuthContext';
 import Footer from './Footer';
 import NotificationBell from './NotificationBell';
+import { BackToTop } from './ui';
 
 const MENU = {
   STUDENT: [
@@ -61,6 +62,7 @@ export default function Layout() {
         <Outlet />
       </main>
       <Footer />
+      <BackToTop />
     </>
   );
 }

@@ -9,12 +9,16 @@ import com.gr7.backend.entity.JobPost;
 import com.gr7.backend.entity.JobStatus;
 import com.gr7.backend.entity.NotificationType;
 import com.gr7.backend.entity.StudentProfile;
+import com.gr7.backend.entity.UserStatus;
 import com.gr7.backend.entity.WorkTimeSlots;
 import com.gr7.backend.exception.ApiException;
 import com.gr7.backend.repository.ApplicationRepository;
 import com.gr7.backend.repository.EmployerProfileRepository;
 import com.gr7.backend.repository.JobPostRepository;
 import com.gr7.backend.repository.StudentProfileRepository;
+import com.gr7.backend.repository.UserRepository;
+import com.gr7.backend.entity.Role;
+import com.gr7.backend.entity.User;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -34,15 +38,17 @@ public class JobService {
     private final ApplicationRepository applications;
     private final NotificationService notifications;
     private final StudentProfileRepository students;
+    private final UserRepository users;
 
     public JobService(JobPostRepository jobs, EmployerProfileRepository employers,
                       ApplicationRepository applications, NotificationService notifications,
-                      StudentProfileRepository students) {
+                      StudentProfileRepository students, UserRepository users) {
         this.jobs = jobs;
         this.employers = employers;
         this.applications = applications;
         this.notifications = notifications;
         this.students = students;
+        this.users = users;
     }
 
     @Transactional
@@ -50,20 +56,31 @@ public class JobService {
         JobPost j = new JobPost();
         j.setEmployer(employerOf(userId));
         apply(j, req);
-        j.setStatus(JobStatus.OPEN);
+        j.setStatus(JobStatus.PENDING);
         JobPost saved = jobs.save(j);
-        notifyMatchingStudents(saved);
+        notifyAdminsNewJob(saved, false);
         return JobResponse.from(saved);
     }
 
-    private void notifyMatchingStudents(JobPost job) {
+    /** Gửi thông báo cho toàn bộ quản trị viên đang hoạt động khi có tin mới/gửi duyệt lại. */
+    private void notifyAdminsNewJob(JobPost job, boolean resubmit) {
+        String prefix = resubmit ? "Tin được chỉnh sửa gửi duyệt lại: " : "Tin tuyển dụng mới chờ duyệt: ";
+        String msg = prefix + NotificationService.quote(job.getTitle())
+                + " (" + job.getEmployer().getCompanyName() + ")";
+        String link = "/admin?tab=jobs&filter=PENDING&jobId=" + job.getId();
+        for (User admin : users.findByRoleAndStatus(Role.ADMIN, UserStatus.ACTIVE)) {
+            notifications.create(admin, NotificationType.JOB_PENDING_APPROVAL, msg, link);
+        }
+    }
+
+    /** Đổi visibility sang public để AdminJobService gọi ngay khi duyệt tin. */
+    public void notifyMatchingStudents(JobPost job) {
         int jobMask = job.getShiftSlots() & WorkTimeSlots.ALL;
         if (jobMask == 0) return;
         String msg = "Có việc mới phù hợp lịch rảnh: " + NotificationService.quote(job.getTitle());
         String link = "/jobs/" + job.getId();
         for (StudentProfile s : students.findMatchingForJob(jobMask)) {
             notifications.create(s.getUser(), NotificationType.MATCHING_JOB, msg, link);
-        
         }
     }
     @Transactional
@@ -73,6 +90,11 @@ public class JobService {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Tin đã đóng hoặc đã hoàn thành, không sửa được nữa");
         }
         apply(j, req);
+        if (j.getStatus() == JobStatus.REJECTED) {
+            j.setStatus(JobStatus.PENDING);
+            j.setRejectReason(null);
+            notifyAdminsNewJob(j, true);
+        }
         return JobResponse.from(j);
     }
 

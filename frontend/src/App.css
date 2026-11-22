@@ -433,9 +433,17 @@ select { font: inherit; padding: 10px 12px; border: 1px solid #D1D5DB; border-ra
 /* ===== Nhà tuyển dụng: quản lý tin, form tin, ứng viên ===== */
 .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
 .stats div { background: #fff; border: 1px solid var(--vien); border-radius: 12px; padding: 16px 18px; display: flex; flex-direction: column; gap: 2px; }
+.stats .stat-card { background: #fff; border: 1.5px solid var(--vien); border-radius: 12px; padding: 16px 18px; display: flex; flex-direction: column; gap: 2px; text-align: left;text-decoration: none;font: inherit;cursor: pointer;transition: border-color .18s, box-shadow .18s, transform .15s;}
+.stats .stat-card:hover { border-color: var(--tim); box-shadow: 0 6px 16px rgba(91, 43, 176, .1); transform: translateY(-1px);}
+.stats .stat-card.active { border-color: var(--tim); background: #FBF9FF; }
 .stats b { font-size: 28px; color: var(--tim-dam); }
 .stats span { font-size: 13px; color: var(--phu); }
 .stats .hot { background: #FFF8DB; border-color: #FBE08A; }
+.emp-app-bar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; }
+.emp-app-bar select { min-width: 220px; }
+.app-job-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.app-job-tag { font-size: 12.5px; font-weight: 600; color: var(--tim); background: var(--tim-nhat); padding: 3px 10px; border-radius: 12px; text-decoration: none; }
+.app-job-tag:hover { background: var(--tim); color: #fff; }
 .emp-job { align-items: center; }
 .emp-job .job-meta { margin-top: 8px; }
 .emp-count { width: 90px; flex: none; display: flex; flex-direction: column; align-items: center; }
@@ -582,6 +590,7 @@ img { max-width: 100%; }
 
 /* Form đăng tin: thời gian làm chọn bằng danh sách */
 .wt-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 16px; margin-bottom: 12px; }
+.wt-grid .wide { grid-column: 1 / -1; }
 .wt-grid label { display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 600; color: #374151; }
 .day-pick { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
 .day-check { display: inline-flex; flex-direction: row; align-items: center; gap: 6px; padding: 7px 12px; border: 1.5px solid #D1D5DB; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; background: #fff; }
@@ -690,10 +699,12 @@ img { max-width: 100%; }
 }
 
 /* ===== Sprint 4: trang Quản trị (PB-15, PB-16) ===== */
+/* Thay đoạn .admin-filter cũ bằng đoạn này */
 .admin-filter { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
-.admin-filter input[type=search] { flex: 1; min-width: 220px; }
+.admin-filter input[type=search] { width: 260px; max-width: 100%; margin-left: auto; padding: 8px 12px; font-size: 14px; }
 .admin-filter select { min-width: 170px; }
-.admin-count { font-size: 13px; color: var(--phu); margin-left: auto; }
+.admin-count { font-size: 13px; color: var(--phu); }
+.reject-reason { color: var(--do) !important; font-weight: 500; }
 .small-tabs button { padding: 6px 12px; font-size: 13px; }
 .admin-table { padding: 0; overflow-x: auto; }
 .admin-table table { width: 100%; border-collapse: collapse; font-size: 14px; }
@@ -714,3 +725,85 @@ img { max-width: 100%; }
   .admin-table td.act { text-align: left; padding-top: 8px; }
   .admin-count { margin-left: 0; }
 }
+
+/* ===== Nút về đầu trang ===== */
+.back-top {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 35;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, .35);
+  background: var(--tim);
+  color: #fff;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 20px rgba(59, 30, 110, .28);
+  opacity: 0;
+  transform: translateY(12px);
+  pointer-events: none;
+  transition: opacity .22s ease, transform .22s ease, background .2s ease;
+}
+.back-top.show {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+.back-top:hover {
+  background: var(--tim-dam);
+  transform: translateY(-2px);
+}
+.back-top:active {
+  transform: translateY(0);
+}
+@media (max-width: 640px) {
+  .back-top {
+    right: 16px;
+    bottom: 16px;
+    width: 40px;
+    height: 40px;
+  }
+}
+
+/* Ô lọc trạng thái ngay tại tiêu đề cột bảng Quản trị */
+.th-select {
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .3px;
+  color: var(--phu);
+  background: #fff;
+  border: 1px solid #D9DCE3;
+  border-radius: 7px;
+  padding: 5px 8px;
+  cursor: pointer;
+}
+.th-select:hover, .th-select.on {
+  border-color: var(--tim);
+  color: var(--tim);
+  background: var(--tim-nhat);
+}
+.th-select option {
+  text-transform: none;
+  font-weight: 500;
+  color: var(--chu);
+  background: #fff;
+}
+.admin-table td.empty-row {
+  text-align: center;
+  padding: 24px 16px;
+  color: var(--phu);
+}
+
+.admin-table tr.hl td { background: #FFF8DB; }
+
+/* ===== Trang chi tiết Người dùng & Tin đăng của Quản trị viên ===== */
+.admin-detail-actions { display: flex; flex-direction: column; gap: 8px; }
+.admin-sub-block { margin-top: 18px; }
+.admin-sub-block h3 { font-size: 15px; margin-bottom: 8px; color: var(--chu); }
+.admin-emp-meta { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; padding-top: 12px; border-top: 1px solid #F0F0F3; font-size: 13.5px; color: #374151; }

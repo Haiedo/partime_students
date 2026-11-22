@@ -5,10 +5,12 @@ export const CATEGORIES = ['F&B', 'Bán hàng', 'Gia sư', 'Nhập liệu', 'S�
 export const UNIT = { HOUR: 'giờ', DAY: 'ngày', MONTH: 'tháng', PROJECT: 'dự án' };
 
 export const JOB_STATUS = {
+  PENDING: ['Chờ duyệt', 'pending'],
   OPEN: ['Đang tuyển', 'open'],
   FILLED: ['Đã đủ người', 'filled'],
   COMPLETED: ['Đã hoàn thành', 'done'],
   CLOSED: ['Đã đóng', 'closed'],
+  REJECTED: ['Từ chối duyệt', 'rejected'],
 };
 export const APP_STATUS = {
   PENDING: ['Đang chờ duyệt', 'pending'],

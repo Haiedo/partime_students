@@ -1,5 +1,6 @@
 package com.gr7.backend.controller;
 
+import com.gr7.backend.dto.AdminUserDetailResponse;
 import com.gr7.backend.dto.AdminUserResponse;
 import com.gr7.backend.security.CurrentUser;
 import com.gr7.backend.service.AdminUserService;
@@ -29,6 +30,11 @@ public class AdminUserController {
     public List<AdminUserResponse> list(@RequestParam(required = false) String role,
                                         @RequestParam(required = false) String q) {
         return service.list(role, q);
+    }
+
+    @GetMapping("/{id}")
+    public AdminUserDetailResponse detail(@PathVariable Long id) {
+        return service.detail(id);
     }
 
     @PatchMapping("/{id}/lock")
