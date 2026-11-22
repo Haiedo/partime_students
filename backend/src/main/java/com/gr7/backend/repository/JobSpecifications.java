@@ -86,4 +86,39 @@ public final class JobSpecifications {
     private static boolean hasText(String s) {
         return s != null && !s.isBlank();
     }
+
+    /** Lọc tin có toàn bộ ca làm nằm gọn trong khung giờ rảnh của sinh viên + lọc ngành, địa điểm, lương. */
+    public static Specification<JobPost> matchingAvailability(int availableSlots, String category, String location,
+                                                              BigDecimal minSalary, SalaryUnit unit) {
+        int safeAvailable = availableSlots & WorkTimeSlots.ALL;
+        int busyMask = WorkTimeSlots.ALL & ~safeAvailable;
+        return (root, query, cb) -> {
+            List<Predicate> ps = new ArrayList<>();
+            ps.add(cb.equal(root.get("status"), JobStatus.OPEN));
+            ps.add(cb.isFalse(root.<Boolean>get("hidden")));
+
+            Expression<Integer> slots = root.<Integer>get("shiftSlots");
+            // Phải có ít nhất 1 buổi nằm trong khung rảnh
+            ps.add(cb.notEqual(cb.function("bitand", Integer.class, slots, cb.literal(safeAvailable)), 0));
+            // Không có bất kỳ buổi nào rơi vào khung giờ bận của sinh viên
+            if (busyMask != 0) {
+                ps.add(cb.equal(cb.function("bitand", Integer.class, slots, cb.literal(busyMask)), 0));
+            }
+
+            if (hasText(category)) {
+                ps.add(cb.equal(root.get("category"), category.trim()));
+            }
+            if (hasText(location)) {
+                ps.add(cb.like(cb.lower(root.<String>get("location")), "%" + location.trim().toLowerCase() + "%"));
+            }
+            if (unit != null) {
+                ps.add(cb.equal(root.get("salaryUnit"), unit));
+            }
+            if (minSalary != null) {
+                Expression<BigDecimal> top = cb.coalesce(root.<BigDecimal>get("salaryMax"), root.<BigDecimal>get("salaryMin"));
+                ps.add(cb.greaterThanOrEqualTo(top, minSalary));
+            }
+            return cb.and(ps.toArray(new Predicate[0]));
+        };
+    }
 }

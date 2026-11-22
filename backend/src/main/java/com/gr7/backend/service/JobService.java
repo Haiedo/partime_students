@@ -8,10 +8,14 @@ import com.gr7.backend.entity.EmployerProfile;
 import com.gr7.backend.entity.JobPost;
 import com.gr7.backend.entity.JobStatus;
 import com.gr7.backend.entity.NotificationType;
+import com.gr7.backend.entity.StudentProfile;
+import com.gr7.backend.entity.WorkTimeSlots;
 import com.gr7.backend.exception.ApiException;
 import com.gr7.backend.repository.ApplicationRepository;
 import com.gr7.backend.repository.EmployerProfileRepository;
 import com.gr7.backend.repository.JobPostRepository;
+import com.gr7.backend.repository.StudentProfileRepository;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,13 +33,16 @@ public class JobService {
     private final EmployerProfileRepository employers;
     private final ApplicationRepository applications;
     private final NotificationService notifications;
+    private final StudentProfileRepository students;
 
-    public JobService(JobPostRepository jobs, EmployerProfileRepository employers, ApplicationRepository applications,
-                      NotificationService notifications) {
+    public JobService(JobPostRepository jobs, EmployerProfileRepository employers,
+                      ApplicationRepository applications, NotificationService notifications,
+                      StudentProfileRepository students) {
         this.jobs = jobs;
         this.employers = employers;
         this.applications = applications;
         this.notifications = notifications;
+        this.students = students;
     }
 
     @Transactional
@@ -44,9 +51,21 @@ public class JobService {
         j.setEmployer(employerOf(userId));
         apply(j, req);
         j.setStatus(JobStatus.OPEN);
-        return JobResponse.from(jobs.save(j));
+        JobPost saved = jobs.save(j);
+        notifyMatchingStudents(saved);
+        return JobResponse.from(saved);
     }
 
+    private void notifyMatchingStudents(JobPost job) {
+        int jobMask = job.getShiftSlots() & WorkTimeSlots.ALL;
+        if (jobMask == 0) return;
+        String msg = "Có việc mới phù hợp lịch rảnh: " + NotificationService.quote(job.getTitle());
+        String link = "/jobs/" + job.getId();
+        for (StudentProfile s : students.findMatchingForJob(jobMask)) {
+            notifications.create(s.getUser(), NotificationType.MATCHING_JOB, msg, link);
+        
+        }
+    }
     @Transactional
     public JobResponse update(Long userId, Long jobId, JobRequest req) {
         JobPost j = ownedJob(userId, jobId);
@@ -147,4 +166,6 @@ public class JobService {
         }
         return j;
     }
+
+    
 }

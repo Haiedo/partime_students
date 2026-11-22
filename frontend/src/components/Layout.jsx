@@ -4,7 +4,13 @@ import Footer from './Footer';
 import NotificationBell from './NotificationBell';
 
 const MENU = {
-  STUDENT: [['Việc làm', '/'], ['Việc đã lưu', '/student/saved'], ['Đơn của tôi', '/student/applications'], ['Hồ sơ', '/student/profile']],
+  STUDENT: [
+    ['Việc làm', '/'],
+    ['Việc phù hợp', '/student/matched'],
+    ['Việc đã lưu', '/student/saved'],
+    ['Đơn của tôi', '/student/applications'],
+    ['Hồ sơ', '/student/profile'],
+  ],
   EMPLOYER: [['Tin của tôi', '/employer/jobs'], ['Hồ sơ công ty', '/employer/profile']],
   ADMIN: [['Quản trị', '/admin']],
 };
