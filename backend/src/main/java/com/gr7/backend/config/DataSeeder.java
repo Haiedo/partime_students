@@ -86,7 +86,7 @@ public class DataSeeder implements CommandLineRunner {
             p.setUser(u);
             p.setSchool(s[2]);
             p.setMajor(s[3]);
-            p.setSkills("Giao tiếp, làm việc nhóm");
+            p.setSkills("Giao tiếp, Làm việc nhóm");
             students.save(p);
         }
 
