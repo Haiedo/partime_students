@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import client, { API_URL, errorMessage, fieldErrors } from '../api/client';
+import client, { fileUrl, errorMessage, fieldErrors } from '../api/client';
 import { initials } from '../components/Layout';
 import { Progress, PromoBanner, Toast } from '../components/ui';
 import { MAX_SKILLS, SKILL_GROUPS, joinSkills, parseSkills } from '../utils/skills';
@@ -167,7 +167,7 @@ export default function StudentProfilePage() {
               <div className="cv-file">
                 <span className="cv-ext">{info.cvUrl.split('.').pop().toUpperCase()}</span>
                 <div><b>{info.cvUrl.split('/').pop()}</b>
-                  <a href={API_URL + info.cvUrl} target="_blank" rel="noreferrer">Xem CV hiện tại</a></div>
+                  <a href={fileUrl(info.cvUrl)} target="_blank" rel="noreferrer">Xem CV hiện tại</a></div>
               </div>
             ) : <p className="hint">Chưa có CV. Hồ sơ có CV được nhà tuyển dụng xem nhiều hơn.</p>}
             <label className={`drop ${file ? 'has' : ''}`}>

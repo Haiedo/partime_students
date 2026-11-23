@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import client, { API_URL, errorMessage } from '../api/client';
+import client, { fileUrl, errorMessage } from '../api/client';
 import { initials } from '../components/Layout';
 import ReviewDialog from '../components/ReviewDialog';
 import { Confirm, StatusBadge, Toast } from '../components/ui';
@@ -107,7 +107,7 @@ export default function ApplicantsPage() {
                 {a.phone && <span>{a.phone}</span>}
                 <span>Nộp ngày {dateText(a.appliedAt)}</span>
                 {a.cvUrl
-                  ? <a href={API_URL + a.cvUrl} target="_blank" rel="noreferrer">Xem CV</a>
+                  ? <a href={fileUrl(a.cvUrl)} target="_blank" rel="noreferrer">Xem CV</a>
                   : <span>Không kèm CV</span>}
               </div>
             </div>

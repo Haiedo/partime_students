@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import client, { API_URL, errorMessage } from '../api/client';
+import client, { fileUrl, errorMessage } from '../api/client';
 import { initials } from '../components/Layout';
 import { Confirm, StatusBadge, Toast } from '../components/ui';
 import { APP_STATUS, JOB_STATUS, dateText, salaryText } from '../utils/format';
@@ -99,7 +99,7 @@ export default function AdminUserDetailPage() {
                 <span>CV đính kèm</span>
                 <b>
                   {user.cvUrl
-                    ? <a href={API_URL + user.cvUrl} target="_blank" rel="noreferrer">Xem file CV</a>
+                    ? <a href={fileUrl(user.cvUrl)} target="_blank" rel="noreferrer">Xem file CV</a>
                     : 'Chưa tải lên'}
                 </b>
               </div>
