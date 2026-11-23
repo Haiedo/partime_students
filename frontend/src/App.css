@@ -807,3 +807,14 @@ img { max-width: 100%; }
 .admin-sub-block { margin-top: 18px; }
 .admin-sub-block h3 { font-size: 15px; margin-bottom: 8px; color: var(--chu); }
 .admin-emp-meta { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; padding-top: 12px; border-top: 1px solid #F0F0F3; font-size: 13.5px; color: #374151; }
+
+/* Chọn kỹ năng trong hồ sơ sinh viên (MH-04) */
+.skill-pick { display: flex; flex-direction: column; gap: 8px; }
+.skill-pick small { font-weight: 400; color: var(--phu); margin-left: 6px; }
+.skill-pick select { width: 100%; font-size: 14px; padding: 11px 13px; border: 1.5px solid #D9DCE3; border-radius: 9px; }
+.skill-pick select:disabled { background: #F3F4F6; color: #9CA3AF; }
+.skill-chosen { display: flex; flex-wrap: wrap; gap: 8px; }
+.skill-chosen .filter-chip { padding: 4px 5px 4px 12px; }
+.skill-chosen .chip-x { width: 22px; height: 22px; padding: 0; line-height: 1; font-size: 15px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; }
+.skill-pick .hint { margin: 0; font-size: 13px; }
+.skill-pick .hint.old { color: #B45309; }

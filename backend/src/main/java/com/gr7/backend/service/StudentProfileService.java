@@ -36,7 +36,7 @@ public class StudentProfileService {
         u.setPhone(blankToNull(req.phone()));
         p.setSchool(blankToNull(req.school()));
         p.setMajor(blankToNull(req.major()));
-        p.setSkills(blankToNull(req.skills()));
+        p.setSkills(SkillCatalog.normalize(req.skills()));
         p.setBio(blankToNull(req.bio()));
         return StudentProfileResponse.from(p);
     }
