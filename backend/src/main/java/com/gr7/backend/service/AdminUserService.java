@@ -1,10 +1,19 @@
 package com.gr7.backend.service;
 
+import com.gr7.backend.dto.AdminJobResponse;
+import com.gr7.backend.dto.AdminUserDetailResponse;
 import com.gr7.backend.dto.AdminUserResponse;
+import com.gr7.backend.dto.MyApplicationResponse;
+import com.gr7.backend.entity.EmployerProfile;
 import com.gr7.backend.entity.Role;
+import com.gr7.backend.entity.StudentProfile;
 import com.gr7.backend.entity.User;
 import com.gr7.backend.entity.UserStatus;
 import com.gr7.backend.exception.ApiException;
+import com.gr7.backend.repository.ApplicationRepository;
+import com.gr7.backend.repository.EmployerProfileRepository;
+import com.gr7.backend.repository.JobPostRepository;
+import com.gr7.backend.repository.StudentProfileRepository;
 import com.gr7.backend.repository.UserRepository;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
@@ -22,9 +31,45 @@ import java.util.Locale;
 public class AdminUserService {
 
     private final UserRepository users;
+    private final StudentProfileRepository students;
+    private final EmployerProfileRepository employers;
+    private final JobPostRepository jobs;
+    private final ApplicationRepository applications;
 
-    public AdminUserService(UserRepository users) {
+    public AdminUserService(UserRepository users, StudentProfileRepository students,
+                            EmployerProfileRepository employers, JobPostRepository jobs,
+                            ApplicationRepository applications) {
         this.users = users;
+        this.students = students;
+        this.employers = employers;
+        this.jobs = jobs;
+        this.applications = applications;
+    }
+
+    @Transactional(readOnly = true)
+    public AdminUserDetailResponse detail(Long userId) {
+        User u = find(userId);
+        StudentProfile sp = null;
+        List<MyApplicationResponse> apps = List.of();
+        EmployerProfile ep = null;
+        List<AdminJobResponse> empJobs = List.of();
+
+        if (u.getRole() == Role.STUDENT) {
+            sp = students.findByUserId(userId).orElse(null);
+            if (sp != null) {
+                apps = applications.findByStudentIdOrderByAppliedAtDesc(sp.getId()).stream()
+                        .map(MyApplicationResponse::from)
+                        .toList();
+            }
+        } else if (u.getRole() == Role.EMPLOYER) {
+            ep = employers.findByUserId(userId).orElse(null);
+            if (ep != null) {
+                empJobs = jobs.findByEmployerIdOrderByCreatedAtDesc(ep.getId()).stream()
+                        .map(AdminJobResponse::from)
+                        .toList();
+            }
+        }
+        return AdminUserDetailResponse.from(u, sp, apps, ep, empJobs);
     }
 
     /** role: STUDENT | EMPLOYER | ADMIN hoặc bỏ trống; q: tìm trong email, họ tên. Mới đăng ký đứng đầu. */
@@ -76,4 +121,5 @@ public class AdminUserService {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Vai trò không hợp lệ, chỉ nhận STUDENT, EMPLOYER hoặc ADMIN");
         }
     }
+    
 }

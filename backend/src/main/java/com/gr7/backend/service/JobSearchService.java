@@ -5,6 +5,7 @@ import com.gr7.backend.dto.JobResponse;
 import com.gr7.backend.dto.JobSummary;
 import com.gr7.backend.dto.PageResponse;
 import com.gr7.backend.entity.JobPost;
+import com.gr7.backend.entity.JobStatus;
 import com.gr7.backend.entity.SalaryUnit;
 import com.gr7.backend.entity.WorkTimeSlots;
 import com.gr7.backend.exception.ApiException;
@@ -63,10 +64,17 @@ public class JobSearchService {
 
     /** Tin bị ẩn hoặc không tồn tại -> 404. Tin đã đóng vẫn xem được để sinh viên theo dõi đơn cũ. */
     @Transactional(readOnly = true)
-    public JobResponse detail(Long id) {
+    public JobResponse detail(Long id, Long userId, String role) {
         JobPost j = jobs.findById(id)
-                .filter(x -> !x.isHidden())
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Không tìm thấy tin tuyển dụng"));
+        boolean isAdmin = "ADMIN".equals(role);
+        boolean isOwner = userId != null && j.getEmployer().getUser().getId().equals(userId);
+        if (j.isHidden() && !isAdmin) {
+            throw new ApiException(HttpStatus.NOT_FOUND, "Không tìm thấy tin tuyển dụng");
+        }
+        if ((j.getStatus() == JobStatus.PENDING || j.getStatus() == JobStatus.REJECTED) && !isAdmin && !isOwner) {
+            throw new ApiException(HttpStatus.NOT_FOUND, "Không tìm thấy tin tuyển dụng");
+        }
         return JobResponse.from(j);
     }
 

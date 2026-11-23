@@ -40,8 +40,8 @@ CREATE TABLE student_profiles (
   skills          VARCHAR(500) NULL,
   bio             TEXT         NULL,
   cv_url          VARCHAR(255) NULL,                    -- file PDF/DOCX ≤ 5MB
-  free_slots      INT          NOT NULL DEFAULT 0,      -- lịch rảnh: 21 bit = 7 ngày x 3 buổi
   preferred_area  VARCHAR(150) NULL,                    -- khu vực muốn làm, vd: Bình Thạnh
+  available_slots INT          NOT NULL DEFAULT 0,      -- lịch rảnh sinh viên khai để nhận tin phù hợp: 21 bit = 7 ngày x 3 buổi
   PRIMARY KEY (id),
   UNIQUE KEY uq_student_user (user_id),
   CONSTRAINT fk_student_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -77,8 +77,9 @@ CREATE TABLE job_posts (
   work_time    VARCHAR(200)  NOT NULL,                  -- chuỗi hiển thị, vd: 18:00–22:00, T2–T6
   shift_slots  INT           NOT NULL DEFAULT 0,        -- ca làm: 21 bit = 7 ngày x 3 buổi
   slots        INT           NOT NULL DEFAULT 1,
-  status       ENUM('OPEN','FILLED','COMPLETED','CLOSED') NOT NULL DEFAULT 'OPEN',
+  status       VARCHAR(30)   NOT NULL DEFAULT 'OPEN',   -- PENDING (chờ duyệt) | OPEN | FILLED | COMPLETED | CLOSED | REJECTED; tin mới đăng backend đặt PENDING
   hidden       BOOLEAN       NOT NULL DEFAULT FALSE,    -- admin gỡ tin
+  reject_reason VARCHAR(500)  NULL,                   -- lý do quản trị viên từ chối tin
   created_at   DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at   DATETIME      NULL     ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
@@ -131,7 +132,7 @@ CREATE TABLE reviews (
 CREATE TABLE notifications (
   id          BIGINT       NOT NULL AUTO_INCREMENT,
   user_id     BIGINT       NOT NULL,
-  type        ENUM('NEW_APPLICATION','APPLICATION_ACCEPTED','APPLICATION_REJECTED','JOB_STATUS_CHANGED') NOT NULL,
+  type        VARCHAR(50)  NOT NULL,   -- NEW_APPLICATION | APPLICATION_ACCEPTED | APPLICATION_REJECTED | JOB_STATUS_CHANGED | MATCHING_JOB | JOB_PENDING_APPROVAL
   message     VARCHAR(255) NOT NULL,
   link        VARCHAR(255) NULL,
   is_read     BOOLEAN      NOT NULL DEFAULT FALSE,

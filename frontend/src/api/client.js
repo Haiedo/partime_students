@@ -3,6 +3,12 @@ import axios from 'axios';
 // Địa chỉ backend. Có thể đổi bằng file frontend/.env: VITE_API_URL=http://localhost:8080
 export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
+// Hỗ trợ cả link Cloudinary (https://...) lẫn link local (/uploads/...)
+export function fileUrl(url) {
+  if (!url) return '';
+  return /^https?:\/\//i.test(url) ? url : API_URL + url;
+}
+
 const TOKEN_KEY = 'gr7_token';
 const USER_KEY = 'gr7_user';
 

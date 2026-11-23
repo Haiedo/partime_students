@@ -62,6 +62,12 @@ public class JobPost {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Column(name = "reject_reason", length = 500)
+    private String rejectReason;
+
+    public String getRejectReason() { return rejectReason; }
+    public void setRejectReason(String rejectReason) { this.rejectReason = rejectReason; }
+
     @PrePersist
     void onCreate() {
         createdAt = LocalDateTime.now();

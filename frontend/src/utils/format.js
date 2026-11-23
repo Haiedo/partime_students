@@ -5,10 +5,12 @@ export const CATEGORIES = ['F&B', 'Bán hàng', 'Gia sư', 'Nhập liệu', 'S�
 export const UNIT = { HOUR: 'giờ', DAY: 'ngày', MONTH: 'tháng', PROJECT: 'dự án' };
 
 export const JOB_STATUS = {
+  PENDING: ['Chờ duyệt', 'pending'],
   OPEN: ['Đang tuyển', 'open'],
   FILLED: ['Đã đủ người', 'filled'],
   COMPLETED: ['Đã hoàn thành', 'done'],
   CLOSED: ['Đã đóng', 'closed'],
+  REJECTED: ['Từ chối duyệt', 'rejected'],
 };
 export const APP_STATUS = {
   PENDING: ['Đang chờ duyệt', 'pending'],
@@ -36,3 +38,16 @@ export function dateText(iso) {
   const d = new Date(iso);
   return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
 }
+
+// Báo cáo tin đáng ngờ (PB-21): lý do và trạng thái xử lý
+export const REPORT_REASONS = [
+  ['DEPOSIT', 'Đòi đặt cọc / thu phí'],
+  ['FALSE_INFO', 'Thông tin sai sự thật'],
+  ['SCAM', 'Có dấu hiệu lừa đảo'],
+  ['OTHER', 'Lý do khác'],
+];
+export const REPORT_STATUS = {
+  PENDING: ['Chờ xử lý', 'pending'],
+  RESOLVED: ['Đã gỡ tin', 'rejected'],
+  DISMISSED: ['Đã bỏ qua', 'closed'],
+};

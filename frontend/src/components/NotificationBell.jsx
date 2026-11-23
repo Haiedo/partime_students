@@ -35,7 +35,10 @@ export default function NotificationBell() {
       try { await client.patch(`/api/notifications/${n.id}/read`); } catch { /* vẫn chuyển trang */ }
       load();
     }
-    if (n.link) navigate(n.link);
+    const target = (n.type === 'JOB_PENDING_APPROVAL' && n.link === '/admin')
+      ? '/admin?tab=jobs&filter=PENDING'
+      : n.link;
+    if (target) navigate(target, { state: { fromNotif: Date.now() } });
   };
 
   const readAll = async () => {
@@ -44,9 +47,19 @@ export default function NotificationBell() {
 
   return (
     <div className="bell" ref={box}>
-      <button type="button" className={`bell-btn ${data.unreadCount ? 'has' : ''}`} aria-expanded={open}
-        onClick={() => setOpen(!open)}>
-        Thông báo{data.unreadCount > 0 && <b>{data.unreadCount > 99 ? '99+' : data.unreadCount}</b>}
+      <button
+        type="button"
+        className={`bell-btn ${data.unreadCount ? 'has' : ''}`}
+        aria-label="Thông báo"
+        title="Thông báo"
+        aria-expanded={open}
+        onClick={() => setOpen(!open)}
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+          <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+        </svg>
+        {data.unreadCount > 0 && <b>{data.unreadCount > 99 ? '99+' : data.unreadCount}</b>}
       </button>
       {open && (
         <div className="bell-panel" role="menu">
