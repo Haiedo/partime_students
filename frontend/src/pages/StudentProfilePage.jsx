@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import client, { API_URL, errorMessage, fieldErrors } from '../api/client';
 import { initials } from '../components/Layout';
 import { Progress, PromoBanner, Toast } from '../components/ui';
+import { MAX_SKILLS, SKILL_GROUPS, joinSkills, parseSkills } from '../utils/skills';
 
 const BANNERS = [
   { tag: 'Mẹo ứng tuyển', title: 'Đơn có lời giới thiệu riêng được duyệt nhanh hơn', text: 'Viết 2–3 câu nói rõ ca bạn rảnh và kinh nghiệm liên quan.', big: '2x', bigNote: 'tỉ lệ được xem', cta: 'Xem đơn của tôi', to: '/student/applications', theme: 'yellow' },
@@ -27,12 +28,17 @@ export default function StudentProfilePage() {
   const [toast, setToast] = useState({ text: '', type: 'success' });
   const [file, setFile] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [oldSkills, setOldSkills] = useState([]);
   const closeToast = useCallback(() => setToast({ text: '' }), []);
 
   useEffect(() => {
     client.get('/api/students/me')
       .then(({ data }) => {
         const f = Object.fromEntries(Object.keys(EMPTY).map((k) => [k, data[k] ?? '']));
+        // Kỹ năng nhập tay từ trước không có trong danh sách: báo cho sinh viên, không đưa vào form
+        const { known, unknown } = parseSkills(f.skills);
+        f.skills = joinSkills(known);
+        setOldSkills(unknown);
         setForm(f); setSaved(f);
         setInfo({ email: data.email, cvUrl: data.cvUrl });
       })
@@ -48,6 +54,7 @@ export default function StudentProfilePage() {
     try {
       await client.put('/api/students/me', form);
       setSaved(form);
+      setOldSkills([]);
       setToast({ text: 'Đã lưu hồ sơ', type: 'success' });
     } catch (err) {
       setErrors(fieldErrors(err));
@@ -77,7 +84,16 @@ export default function StudentProfilePage() {
 
   const done = (k) => (k === 'cv' ? !!info.cvUrl : !!String(saved[k]).trim());
   const percent = Math.round((CHECKS.filter(([k]) => done(k)).length / CHECKS.length) * 100);
-  const skills = form.skills.split(',').map((s) => s.trim()).filter(Boolean);
+  const skills = parseSkills(form.skills).known;
+  const toggleSkill = (s) => {
+    if (skills.includes(s)) {
+      setForm({ ...form, skills: joinSkills(skills.filter((x) => x !== s)) });
+    } else if (skills.length >= MAX_SKILLS) {
+      setToast({ text: `Chọn tối đa ${MAX_SKILLS} kỹ năng`, type: 'error' });
+    } else {
+      setForm({ ...form, skills: joinSkills([...skills, s]) });
+    }
+  };
   const changed = JSON.stringify(form) !== JSON.stringify(saved);
 
   return (
@@ -106,11 +122,31 @@ export default function StudentProfilePage() {
             <Input label="Số điện thoại" name="phone" form={form} errors={errors} onChange={onChange} placeholder="vd: 0901234567" />
             <Input label="Trường" name="school" form={form} errors={errors} onChange={onChange} placeholder="vd: Đại học Văn Lang" />
             <Input label="Ngành học" name="major" form={form} errors={errors} onChange={onChange} placeholder="vd: Công nghệ thông tin" />
-            <label className="wide">Kỹ năng (cách nhau bằng dấu phẩy)
-              <input name="skills" value={form.skills} onChange={onChange} placeholder="vd: Giao tiếp, Excel, Tiếng Anh" />
-              {skills.length > 0 && <span className="chips">{skills.map((s) => <em key={s}>{s}</em>)}</span>}
+            <div className="wide skill-pick">
+              <label htmlFor="skill-add">Kỹ năng <small>Chọn trong danh sách, tối đa {MAX_SKILLS} ({skills.length}/{MAX_SKILLS})</small></label>
+              <select id="skill-add" value="" disabled={skills.length >= MAX_SKILLS}
+                onChange={(e) => e.target.value && toggleSkill(e.target.value)}>
+                <option value="">{skills.length >= MAX_SKILLS ? `Đã chọn đủ ${MAX_SKILLS} kỹ năng` : 'Thêm kỹ năng...'}</option>
+                {SKILL_GROUPS.map((g) => (
+                  <optgroup key={g.name} label={g.name}>
+                    {g.items.filter((s) => !skills.includes(s)).map((s) => <option key={s} value={s}>{s}</option>)}
+                  </optgroup>
+                ))}
+              </select>
+              {skills.length > 0 ? (
+                <div className="skill-chosen">
+                  {skills.map((s) => (
+                    <span key={s} className="filter-chip">{s}
+                      <button type="button" onClick={() => toggleSkill(s)} className="chip-x" aria-label={`Xóa kỹ năng ${s}`} title="Xóa">×</button>
+                    </span>
+                  ))}
+                </div>
+              ) : <span className="hint">Chưa chọn kỹ năng nào.</span>}
+              {oldSkills.length > 0 && (
+                <span className="hint old">Kỹ năng nhập trước đây không có trong danh sách và sẽ bị bỏ khi lưu: {oldSkills.join(', ')}.</span>
+              )}
               {errors.skills && <span className="error">{errors.skills}</span>}
-            </label>
+            </div>
             <label className="wide">Giới thiệu bản thân
               <textarea name="bio" rows="5" value={form.bio} onChange={onChange}
                 placeholder="Năm học, thời gian rảnh, kinh nghiệm làm thêm..." />
