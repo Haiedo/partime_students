@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import client, { API_URL, errorMessage } from '../api/client';
+import client, { fileUrl, errorMessage } from '../api/client';
 import { initials } from '../components/Layout';
 import ReviewDialog from '../components/ReviewDialog';
 import { StatusBadge, Toast } from '../components/ui';
@@ -72,7 +72,7 @@ export default function MyApplicationsPage() {
                 <span className="chip">Nộp ngày {dateText(a.appliedAt)}</span>
                 {a.jobStatus !== 'OPEN' && <StatusBadge map={JOB_STATUS} value={a.jobStatus} />}
                 {a.cvUrl
-                  ? <a className="chip link-chip" href={API_URL + a.cvUrl} target="_blank" rel="noreferrer">CV đã gửi</a>
+                  ? <a className="chip link-chip" href={fileUrl(a.cvUrl)} target="_blank" rel="noreferrer">CV đã gửi</a>
                   : <span className="chip">Không kèm CV</span>}
               </div>
               {a.coverLetter && <p className="letter">{a.coverLetter}</p>}
