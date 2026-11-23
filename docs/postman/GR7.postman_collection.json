@@ -444,7 +444,8 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Mã trả về 200\", () => pm.response.to.have.status(200));",
-                  "pm.test(\"Đã lưu kỹ năng\", () => pm.expect(pm.response.json().skills).to.include(\"Excel\"));"
+                  "pm.test(\"Đã lưu kỹ năng\", () => pm.expect(pm.response.json().skills).to.include(\"Excel\"));",
+                  "pm.test(\"Kỹ năng được chuẩn hóa theo danh sách\", () => pm.expect(pm.response.json().skills).to.eql(\"Giao tiếp, Excel, Tiếng Anh\"));"
                 ]
               }
             }
@@ -475,6 +476,49 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"fullName\": \"Nguyễn Văn A\",\n  \"phone\": \"0901234567\",\n  \"school\": \"Đại học Văn Lang\",\n  \"major\": \"Công nghệ thông tin\",\n  \"skills\": \"Giao tiếp, Excel, tiếng Anh\",\n  \"bio\": \"Sinh viên năm 3, rảnh buổi tối.\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Kỹ năng ngoài danh sách → 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Mã trả về 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Báo kỹ năng không có trong danh sách\", () => pm.expect(pm.response.json().message).to.include(\"không có trong danh sách\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenSV}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/students/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "students",
+                "me"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Nguyễn Văn A\",\n  \"phone\": \"0901234567\",\n  \"school\": \"Đại học Văn Lang\",\n  \"major\": \"Công nghệ thông tin\",\n  \"skills\": \"Giao tiếp, Photoshop\",\n  \"bio\": \"Sinh viên năm 3, rảnh buổi tối.\"\n}"
             }
           }
         },
