@@ -2,11 +2,16 @@ package com.gr7.backend.security;
 
 import com.gr7.backend.entity.SocialProvider;
 import com.gr7.backend.exception.ApiException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.json.JsonParser;
+import org.springframework.boot.json.JsonParserFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
 
 import java.util.Map;
 
@@ -20,13 +25,17 @@ import java.util.Map;
 @Component
 public class FacebookTokenVerifier {
 
+    private static final Logger log = LoggerFactory.getLogger(FacebookTokenVerifier.class);
+
     private final String appId;
     private final String appSecret;
     private final RestClient http;
+    // Graph API trả Content-Type text/javascript nên đọc chuỗi rồi tự phân tích JSON
+    private final JsonParser json = JsonParserFactory.getJsonParser();
 
     public FacebookTokenVerifier(@Value("${app.facebook.app-id:${FACEBOOK_APP_ID:}}") String appId,
                                  @Value("${app.facebook.app-secret:${FACEBOOK_APP_SECRET:}}") String appSecret,
-                                 @Value("${app.facebook.graph-url:https://graph.facebook.com/v26.0}") String graphUrl) {
+                                 @Value("${app.facebook.graph-url:https://graph.facebook.com}") String graphUrl) {
         this.appId = appId == null ? "" : appId.trim();
         this.appSecret = appSecret == null ? "" : appSecret.trim();
         this.http = RestClient.builder().baseUrl(graphUrl).build();
@@ -42,20 +51,23 @@ public class FacebookTokenVerifier {
             throw new ApiException(HttpStatus.UNAUTHORIZED, "Token Facebook không hợp lệ");
         }
         try {
-            Map<String, Object> debug = http.get()
+            String debugBody = http.get()
                     .uri(b -> b.path("/debug_token")
                             .queryParam("input_token", accessToken)
                             .queryParam("access_token", appId + "|" + appSecret).build())
-                    .retrieve().body(Map.class);
+                    .retrieve().body(String.class);
+            Map<String, Object> debug = debugBody == null ? null : json.parseMap(debugBody);
             Map<String, Object> data = debug == null ? null : (Map<String, Object>) debug.get("data");
-            if (data == null || !Boolean.TRUE.equals(data.get("is_valid")) || !appId.equals(String.valueOf(data.get("app_id")))) {
+            if (data == null || !"true".equals(String.valueOf(data.get("is_valid"))) || !appId.equals(String.valueOf(data.get("app_id")))) {
+                log.warn("Facebook debug_token không hợp lệ: {}", data);
                 throw new ApiException(HttpStatus.UNAUTHORIZED, "Token Facebook không hợp lệ hoặc đã hết hạn");
             }
-            Map<String, Object> me = http.get()
+            String meBody = http.get()
                     .uri(b -> b.path("/me")
                             .queryParam("fields", "id,name,email")
                             .queryParam("access_token", accessToken).build())
-                    .retrieve().body(Map.class);
+                    .retrieve().body(String.class);
+            Map<String, Object> me = meBody == null ? null : json.parseMap(meBody);
             if (me == null || me.get("id") == null) {
                 throw new ApiException(HttpStatus.UNAUTHORIZED, "Không đọc được thông tin tài khoản Facebook");
             }
@@ -65,7 +77,12 @@ public class FacebookTokenVerifier {
             // Facebook chỉ trả email chính đã được xác nhận nên coi là đã xác minh
             return new SocialProfile(SocialProvider.FACEBOOK, String.valueOf(me.get("id")), cleanEmail,
                     cleanEmail != null, me.get("name") == null ? null : String.valueOf(me.get("name")));
+        } catch (RestClientResponseException e) {
+            // In câu trả lời của Facebook để biết sai App Secret, sai App ID hay token hết hạn
+            log.warn("Facebook từ chối ({}): {}", e.getStatusCode(), e.getResponseBodyAsString());
+            throw new ApiException(HttpStatus.UNAUTHORIZED, "Token Facebook không hợp lệ hoặc đã hết hạn");
         } catch (RestClientException e) {
+            log.warn("Không gọi được Facebook Graph API: {}", e.getMessage());
             throw new ApiException(HttpStatus.UNAUTHORIZED, "Token Facebook không hợp lệ hoặc đã hết hạn");
         }
     }
