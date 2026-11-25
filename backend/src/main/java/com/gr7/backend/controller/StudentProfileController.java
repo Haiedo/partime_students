@@ -7,6 +7,7 @@ import com.gr7.backend.security.CurrentUser;
 import com.gr7.backend.service.StudentProfileService;
 import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
@@ -39,5 +40,11 @@ public class StudentProfileController {
     public CvUploadResponse uploadCv(@AuthenticationPrincipal Jwt jwt,
                                      @RequestParam("file") MultipartFile file) {
         return new CvUploadResponse(service.uploadCv(CurrentUser.id(jwt), file));
+    }
+
+    @DeleteMapping("/cv")
+    public ResponseEntity<Void> removeCv(@AuthenticationPrincipal Jwt jwt) {
+        service.removeCv(CurrentUser.id(jwt));
+        return ResponseEntity.noContent().build();
     }
 }
