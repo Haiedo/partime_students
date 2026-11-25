@@ -419,7 +419,7 @@ select { font: inherit; padding: 10px 12px; border: 1px solid #D1D5DB; border-ra
 .row-main { flex: 1; min-width: 0; }
 .row-side { width: 200px; flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; text-align: right; }
 .row-side small { font-size: 12px; color: var(--phu); line-height: 1.4; }
-.letter { margin-top: 10px; font-size: 14px; color: #4B5563; background: #F9FAFB; border-radius: 8px; padding: 10px 12px; line-height: 1.5; white-space: pre-line; }
+.letter { margin-top: 10px; font-size: 14px; color: #4B5563; background: #F9FAFB; border-radius: 8px; padding: 10px 12px; line-height: 1.5; white-space: pre-line; overflow-wrap: anywhere; }
 .link-chip { text-decoration: none; color: var(--tim); }
 .list-tools { display: flex; align-items: center; gap: 10px; }
 .sort { padding: 6px 10px; font-size: 13px; }
@@ -542,6 +542,15 @@ img { max-width: 100%; }
   .form-grid, .detail-grid { grid-template-columns: 1fr; }
   .nav { padding: 0 18px; }
   .nav .who-text { display: none; }
+}
+/* Máy tính bảng (641 – 900 px): menu đủ mục của sinh viên không vừa 1 hàng, chuyển sang 2 hàng như điện thoại */
+@media (max-width: 900px) {
+  .nav { position: static; flex-wrap: wrap; height: auto; padding: 10px 18px 8px; gap: 6px; }
+  .nav .logo { order: 0; flex: 1; }
+  .nav .btn { order: 1; }
+  .nav .who { display: none; }
+  .nav .spacer { order: 2; flex-basis: 100%; height: 0; }
+  .nav-item { order: 3; }
 }
 @media (max-width: 900px) {
   .search-band { grid-template-columns: 1fr 1fr; }
@@ -856,3 +865,11 @@ img { max-width: 100%; }
 .switch-row input:checked + .switch-track i { left: 21px; }
 .switch-row input:focus-visible + .switch-track { outline: 2px solid #FFD43B; outline-offset: 2px; }
 .switch-row input:disabled + .switch-track { opacity: .6; }
+
+/* DF_GUI_04: bảng Báo cáo tin không bóp hẹp cột tên tin khi khung Chi tiết báo cáo mở */
+@media (min-width: 1001px) { .report-layout { grid-template-columns: minmax(0, 1fr) 300px; } }
+.report-layout .admin-table th, .report-layout .admin-table td { padding: 10px 12px; }
+.report-layout .admin-table td:first-child { min-width: 190px; }
+.report-layout .admin-table th:not(:first-child):not(:nth-child(3)), .report-layout .admin-table td:not(:first-child):not(:nth-child(3)) { white-space: nowrap; }
+.report-layout .admin-table td:nth-child(3) { min-width: 110px; }
+.report-layout .admin-table td.act .row-btns { flex-direction: column; align-items: stretch; gap: 6px; }
