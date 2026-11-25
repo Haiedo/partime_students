@@ -865,3 +865,11 @@ img { max-width: 100%; }
 .switch-row input:checked + .switch-track i { left: 21px; }
 .switch-row input:focus-visible + .switch-track { outline: 2px solid #FFD43B; outline-offset: 2px; }
 .switch-row input:disabled + .switch-track { opacity: .6; }
+
+/* DF_GUI_04: bảng Báo cáo tin không bóp hẹp cột tên tin khi khung Chi tiết báo cáo mở */
+@media (min-width: 1001px) { .report-layout { grid-template-columns: minmax(0, 1fr) 300px; } }
+.report-layout .admin-table th, .report-layout .admin-table td { padding: 10px 12px; }
+.report-layout .admin-table td:first-child { min-width: 190px; }
+.report-layout .admin-table th:not(:first-child):not(:nth-child(3)), .report-layout .admin-table td:not(:first-child):not(:nth-child(3)) { white-space: nowrap; }
+.report-layout .admin-table td:nth-child(3) { min-width: 110px; }
+.report-layout .admin-table td.act .row-btns { flex-direction: column; align-items: stretch; gap: 6px; }
