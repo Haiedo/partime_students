@@ -57,4 +57,15 @@ public class StudentProfileService {
     static String blankToNull(String s) {
         return (s == null || s.isBlank()) ? null : s.trim();
     }
+
+    @Transactional
+    public void removeCv(Long userId) {
+        StudentProfile s = students.findByUserId(userId)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Không tìm thấy hồ sơ sinh viên"));
+        if (s.getCvUrl() == null || s.getCvUrl().isBlank()) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Hồ sơ hiện chưa có CV để gỡ");
+        }
+        s.setCvUrl(null);
+        students.save(s);
+    }
 }

@@ -873,3 +873,6 @@ img { max-width: 100%; }
 .report-layout .admin-table th:not(:first-child):not(:nth-child(3)), .report-layout .admin-table td:not(:first-child):not(:nth-child(3)) { white-space: nowrap; }
 .report-layout .admin-table td:nth-child(3) { min-width: 110px; }
 .report-layout .admin-table td.act .row-btns { flex-direction: column; align-items: stretch; gap: 6px; }
+
+.cv-actions { display: flex; align-items: center; gap: 12px; margin-top: 2px; }
+.danger-text { color: var(--do) !important; }

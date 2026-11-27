@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import client, { fileUrl, errorMessage, fieldErrors } from '../api/client';
 import { initials } from '../components/Layout';
-import { Progress, PromoBanner, Toast } from '../components/ui';
+import { Progress, PromoBanner, Confirm, Toast } from '../components/ui';
 import { MAX_SKILLS, SKILL_GROUPS, joinSkills, parseSkills } from '../utils/skills';
 import EmailSettingCard from '../components/EmailSettingCard';
 
@@ -46,7 +46,11 @@ export default function StudentProfilePage() {
       .catch((err) => setToast({ text: errorMessage(err), type: 'error' }));
   }, []);
 
-  const onChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  const onChange = (e) => {
+    const { name, value } = e.target;
+    const nextValue = name === 'phone' ? value.replace(/\D/g, '') : value;
+    setForm({ ...form, [name]: nextValue });
+  };
 
   const onSave = async (e) => {
     e.preventDefault();
@@ -80,6 +84,23 @@ export default function StudentProfilePage() {
       setToast({ text: 'Đã tải lên CV', type: 'success' });
     } catch (err) {
       fail(errorMessage(err));
+    }
+  };
+
+  const [askRemoveCv, setAskRemoveCv] = useState(false);
+  const [removingCv, setRemovingCv] = useState(false);
+
+  const removeCv = async () => {
+    setRemovingCv(true);
+    try {
+      await client.delete('/api/students/me/cv');
+      setInfo((prev) => ({ ...prev, cvUrl: null }));
+      setToast({ text: 'Đã gỡ CV khỏi hồ sơ', type: 'success' });
+    } catch (err) {
+      setToast({ text: errorMessage(err), type: 'error' });
+    } finally {
+      setRemovingCv(false);
+      setAskRemoveCv(false);
     }
   };
 
@@ -120,7 +141,7 @@ export default function StudentProfilePage() {
           </div>
           <div className="grid">
             <Input label="Họ tên *" name="fullName" form={form} errors={errors} onChange={onChange} />
-            <Input label="Số điện thoại" name="phone" form={form} errors={errors} onChange={onChange} placeholder="vd: 0901234567" />
+            <Input label="Số điện thoại" name="phone" form={form} errors={errors} onChange={onChange} placeholder="vd: 0901234567" type="tel" inputMode="numeric" maxLength={20}/>
             <Input label="Trường" name="school" form={form} errors={errors} onChange={onChange} placeholder="vd: Đại học Văn Lang" />
             <Input label="Ngành học" name="major" form={form} errors={errors} onChange={onChange} placeholder="vd: Công nghệ thông tin" />
             <div className="wide skill-pick">
@@ -168,8 +189,20 @@ export default function StudentProfilePage() {
             {info.cvUrl ? (
               <div className="cv-file">
                 <span className="cv-ext">{info.cvUrl.split('.').pop().toUpperCase()}</span>
-                <div><b>{info.cvUrl.split('/').pop()}</b>
-                  <a href={fileUrl(info.cvUrl)} target="_blank" rel="noreferrer">Xem CV hiện tại</a></div>
+                <div>
+                  <b>{info.cvUrl.split('/').pop()}</b>
+                  <div className="cv-actions">
+                    <a href={fileUrl(info.cvUrl)} target="_blank" rel="noreferrer">Xem CV hiện tại</a>
+                    <button
+                      type="button"
+                      className="link-btn danger-text"
+                      disabled={removingCv}
+                      onClick={() => setAskRemoveCv(true)}
+                    >
+                      Gỡ CV
+                    </button>
+                  </div>
+                </div>
               </div>
             ) : <p className="hint">Chưa có CV. Hồ sơ có CV được nhà tuyển dụng xem nhiều hơn.</p>}
             <label className={`drop ${file ? 'has' : ''}`}>
@@ -193,17 +226,35 @@ export default function StudentProfilePage() {
           </div>
         </aside>
       </div>
+      {askRemoveCv && (
+        <Confirm
+          title="Gỡ CV khỏi hồ sơ?"
+          text="CV sẽ được gỡ khỏi hồ sơ cá nhân của bạn. Các đơn ứng tuyển đã nộp trước đó không bị ảnh hưởng. Bạn có thể tải lên CV mới bất cứ lúc nào."
+          okText="Gỡ CV"
+          danger
+          busy={removingCv}
+          onOk={removeCv}
+          onClose={() => setAskRemoveCv(false)}
+        />
+      )}
       <Toast {...toast} onClose={closeToast} />
     </div>
   );
 }
 
-function Input({ label, name, form, errors, onChange, placeholder }) {
+function Input({ label, name, form, errors, onChange, placeholder, ...rest }) {
   return (
     <label>{label}
-      <input name={name} value={form[name]} onChange={onChange} placeholder={placeholder}
-        className={errors[name] ? 'invalid' : ''} />
+      <input
+        name={name}
+        value={form[name]}
+        onChange={onChange}
+        placeholder={placeholder}
+        className={errors[name] ? 'invalid' : ''}
+        {...rest}
+      />
       {errors[name] && <span className="error">{errors[name]}</span>}
     </label>
   );
 }
+
